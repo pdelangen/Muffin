@@ -1,4 +1,6 @@
-# %%
+"""
+Functions to generate consensus peaks.
+"""
 import argparse
 import os
 import sys
@@ -1035,4 +1037,3 @@ if __name__ == "__main__":
             print("No annotation file given, will skip 1-NN accuracy.")
     sys.exit()
 
-# %%

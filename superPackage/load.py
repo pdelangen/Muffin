@@ -1,3 +1,6 @@
+"""
+Functions to create a dataset from arrays or bam files.
+"""
 import anndata as ad
 import numpy as np
 import pandas as pd

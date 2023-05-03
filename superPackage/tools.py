@@ -1,3 +1,6 @@
+"""
+Functions for data processing (normalization factors, deviance residuals, PCA with optimal number of components, UMAP...).
+"""
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -8,6 +11,7 @@ import umap
 from statsmodels.stats.multitest import fdrcorrection
 import scipy as sc
 import kneed
+from scipy.sparse import csr_array
 from .utils import FA_models, cluster, normalization, diff_expr, stats
 
 
@@ -103,6 +107,17 @@ def trim_low_counts(dataset, min_exp=3, min_counts=1, min_mean=0.0):
                                                    min_exp, min_counts, min_mean)
     return ~dropped_features
     
+def remove_low_peaks(dataset, minExp=3):
+    """_summary_
+
+    Parameters
+    ----------
+    dataset : _type_
+        _description_
+    minExp : int, optional
+        _description_, by default 3
+    """    
+    pass
 
 def pseudo_peak_calling(dataset, alpha=0.05, minFC=1.0, minExp=3):
     """

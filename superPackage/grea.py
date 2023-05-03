@@ -1,5 +1,7 @@
+"""
+Genomic Regions Enrichment Analysis
+"""
 import os
-import textwrap
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -8,11 +10,9 @@ import plotly.express as px
 import pyranges as pr
 from joblib import Parallel, delayed
 from joblib.externals.loky import get_reusable_executor
-from statsmodels.api import GLM, NegativeBinomial
-from statsmodels.genmod.families.family import Binomial
 from statsmodels.stats.multitest import fdrcorrection
 
-from .utils import cluster, overlap_utils
+from .utils import cluster, overlap_utils, utils
 from .utils.stats import fitNBinomModel
 
 maxCores = len(os.sched_getaffinity(0))
@@ -138,7 +138,26 @@ class pyGREAT:
                 continue
         self.geneRegulatory = self.geneRegulatory.loc[self.mat.columns]
 
-    def getNearestGene(self, query):
+    def getNearestGene(self, query, max_dist=np.inf):
+        """
+        Get the nearest gene for each row. 
+        If it can't be retrieved will be named "None" (str).
+
+        Parameters
+        ----------
+        query : pandas Dataframe or PyRanges
+            _description_
+        
+        max_dist : integer or float
+            Maximum distance for association, default np.inf
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
+        if not isinstance(query, pd.DataFrame):
+            query = query.as_df()
         gr = query.copy()
         gr["Names"] = np.arange(len(gr))
         gr = pr.PyRanges(gr[["Chromosome", "Start", "End", "Names"]])
@@ -146,16 +165,33 @@ class pyGREAT:
         r = gr.nearest(gr2, strandedness=False)
         chroms_missing = set(gr.chromosomes).difference(gr2.chromosomes)
         if len(chroms_missing) > 0:
-            missing_gr = pr.concat([gr[c] for c in chroms_missing])
+            missing_gr = pr.concat([gr[c] for c in chroms_missing]).as_df()
+            missing_gr["gene_name"] = "None"
+            missing_gr = pr.PyRanges(missing_gr)
             results = pr.concat([r,  missing_gr], strand=False).as_df()
         else:
             results = r.as_df()
         results.index=results["Names"]
         results = results.loc[np.arange(len(gr))]
+        results["gene_name"].where(results["Distance"] < max_dist, "None", inplace=True)
         return results
     
-    def labelByNearest(self, query):
-        names = self.getNearestGene(query)
+    def label_by_nearest_gene(self, query):
+        """
+        Label each row by its nearest gene, avoiding duplicates.
+        E.g. NADK_1, MYC_1, MYC_2, None_1, None_2
+
+        Parameters
+        ----------
+        query : pandas Dataframe or PyRanges
+            Set of genomic regions.
+
+        Returns
+        -------
+        labels: ndarray
+            Each corresponding label.
+        """
+        names = self.getNearestGene(query, max_dist=self.distal)
         groups = names.groupby('gene_name')
         # add a count for each duplicate value within each group
         names['count'] = groups.cumcount() + 1
@@ -218,21 +254,22 @@ class pyGREAT:
         
     
     def findGenesForGeneSet(self, term, enrichedGeneTab, alpha=0.05):
-        """_summary_
+        """
+        Find genes enriched for a particular geneset
 
         Parameters
         ----------
-        term : _type_
-            _description_
-        enrichedGeneTab : _type_
-            _description_
+        term : str
+            Name of the GO term.
+        enrichedGeneTab : pandas dataframe
+            Results of findEnrichedGenes.
         alpha : float, optional
-            _description_, by default 0.05
+            Adjusted P-value threshold, by default 0.05
 
         Returns
         -------
-        _type_
-            _description_
+        Enriched: pandas Dataframe
+            Enriched genes
         """
         sigGenes = enrichedGeneTab[enrichedGeneTab["FDR"] < alpha].index
         genesInTerm = self.mat.columns[self.mat.loc[term] > 0.5]
@@ -344,7 +381,7 @@ class pyGREAT:
         selected = (newDF["BH corrected p-value"] < alpha)
         ordered = -np.log10(newDF[by][selected]).sort_values(ascending=True)[:topK]
         terms = ordered.index
-        t = [capTxtLen(term, 50) for term in terms]
+        t = [utils.capTxtLen(term, 50) for term in terms]
         ax.tick_params(axis="x", labelsize=8)
         ax.tick_params(length=3, width=1.2)
         ax.barh(range(len(terms)), np.minimum(ordered[::-1],324.0))

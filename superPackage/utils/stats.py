@@ -125,7 +125,7 @@ def compute_residuals_input(alpha, counts, design, res_type,
 def fitNBinomModel(hasAnnot, observed, expected, goTerm, idx):
     df = pd.DataFrame(np.array([hasAnnot.T.astype(float), np.ones_like(expected)]).T, 
                                 columns=["GS", "Intercept"], index=idx)
-    model = NegativeBinomial(observed, df, exposure=expected, loglike_method="nb1")
+    model = nbfit(observed, df, exposure=expected, loglike_method="nb1")
     model = model.fit([0.0,0.0,10.0], method="lbfgs", disp=False)
     beta = model.params["GS"]
     waldP = model.pvalues["GS"]

@@ -89,8 +89,9 @@ sc.pl.rank_genes_groups_heatmap(peakData, n_genes=20, layer="residuals",
 # %%
 all_reg = pr.PyRanges(dataset.var[["Chromosome","Start","End","Strand"]])
 DE_reg = pr.PyRanges(peakData.var[["Chromosome","Start","End","Strand"]][peakData.varm["DE_results"]["padj"]<0.05])
-results = gsea_obj.findEnriched(query=DE_reg)
+results = gsea_obj.findEnriched(query=DE_reg, background=all_reg)
 # %%
 gsea_obj.clusterTreemap(results)
 # %%
 gsea_obj.findGenesForGeneSet()
+# %%
