@@ -1,0 +1,4 @@
+- Add row column annot from bam files
+- Add heatmap
+- Add pyGREAT
+- Re-org and package everything
