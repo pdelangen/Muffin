@@ -8,10 +8,9 @@ import pandas as pd
 import scanpy as sc
 sc.set_figure_params(dpi=500)
 # %%
-import lib.countModelerScanpyWrapper as cm
+import muffin as sp
 dataset = sc.read_10x_mtx(paths.scRNAseqGenes)
 # %%
-sc.set_figure_params(dpi=500, color_map = 'viridis')
 dataset.var['mt'] = dataset.var_names.str.startswith('MT-')  # annotate the group of mitochondrial genes as 'mt'
 sc.pp.calculate_qc_metrics(dataset, qc_vars=['mt'], percent_top=None, log1p=False, inplace=True)
 sc.pl.violin(dataset, ['n_genes_by_counts', 'total_counts', 'pct_counts_mt'],
@@ -21,21 +20,21 @@ sc.pl.scatter(dataset, x='total_counts', y='n_genes_by_counts')
 dataset = dataset[dataset.obs.pct_counts_mt < 15, :]
 dataset = dataset[dataset.obs.n_genes_by_counts < 4000, :]
 dataset = dataset[dataset.obs.n_genes_by_counts > 1000, :]
+# %%
 dataset.X = dataset.X.toarray().astype("int32")
-# %%
 design = np.ones((dataset.X.shape[0], 1))
-cm.set_design_matrix(dataset, design)
-cm.compute_size_factors(dataset)
-kept = cm.trim_low_counts(dataset)
+sp.load.set_design_matrix(dataset, design)
+sp.tools.compute_size_factors(dataset)
+kept = sp.tools.trim_low_counts(dataset)
 dataset = dataset[:, kept].copy()
-cm.fit_mv_trendline(dataset)
-cm.computeResiduals(dataset, clip=np.sqrt(9+len(dataset)/4))
-hv = cm.feature_selection_elbow(dataset)
-cm.compute_PA_PCA(dataset,feature_mask=hv, max_rank=100, plot=True)
+sp.tools.computeResiduals(dataset, residuals="anscombe", clip=np.inf)
+hv = sp.tools.feature_selection_elbow(dataset)
+sp.tools.compute_PA_PCA(dataset,feature_mask=hv, max_rank=100, plot=True)
 # %%
-cm.compute_UMAP(dataset)
-cm.cluster_rows_leiden(dataset)
+sp.tools.compute_UMAP(dataset)
+sp.tools.cluster_rows_leiden(dataset)
 # %%
+sc.set_figure_params(dpi=500, color_map = 'viridis')
 sc.pl.umap(dataset, color='leiden', legend_loc='on data',
             legend_fontsize=5, legend_fontoutline=0.1, s=10.0,
             title='10k PBMCs gene-centric scRNA-seq', palette='tab20')
@@ -44,7 +43,8 @@ sc.pl.umap(dataset, color='log_sf', legend_loc='on data',
             legend_fontsize=5, legend_fontoutline=0.1, s=10.0,
             title='10k PBMCs gene-centric scRNA-seq', palette='tab20')
 # %%
-
+fig, ax = sp.plots.mega_heatmap(dataset[:, hv], label_col="leiden")
+# %%
 from sklearn.preprocessing import StandardScaler
 dataset.layers["scaled"] = StandardScaler().fit_transform(dataset.layers["residuals"])
 sc.tl.rank_genes_groups(dataset, 'leiden', use_raw=False, layer="scaled",

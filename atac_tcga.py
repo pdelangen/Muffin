@@ -3,12 +3,12 @@ import sys
 sys.path.append("./")
 from settings import settings, paths
 import pandas as pd
-import superPackage.countModelerScanpyWrapper as cm
+import muffin as sp
 import numpy as np
 dataset_tsv = pd.read_csv("/shared/projects/pol2_chipseq/data_newPkg/tcga_atac/atac_table.txt", sep="\t")
 sequencing_metadata = pd.read_csv("/shared/projects/pol2_chipseq/data_newPkg/tcga_atac/sequencing_stats.csv", 
                                   sep="\t", index_col=0)
-dataset = cm.dataset_from_arrays(dataset_tsv.iloc[:, 7:].values.T, row_names=dataset_tsv.columns[7:],
+dataset = sp.load.dataset_from_arrays(dataset_tsv.iloc[:, 7:].values.T, row_names=dataset_tsv.columns[7:],
                                  col_names=dataset_tsv["name"])
 dataset.var = dataset_tsv.iloc[:, :7]
 dataset.obs["label"] = [s[:4] for s in dataset.obs_names]
@@ -18,29 +18,27 @@ dataset.obs["subtype"][dataset.obs["subtype"]=="Normal"] = np.nan
 dataset.var.rename(columns={"seqnames":"Chromosome","start":"Start","end":"End"}, inplace=True)
 # %%
 # %%
-from superPackage.utils.pyGREATglm import pyGREAT
 import pyranges as pr
-gsea_obj = pyGREAT(paths.GOfile, paths.gencode, paths.chromsizes)
-dataset.var_names = gsea_obj.labelByNearest(dataset.var[["Chromosome","Start","End"]])
+pygreat = sp.grea.pyGREAT(paths.GOfile, paths.gencode, paths.chromsizes)
+dataset.var_names = pygreat.label_by_nearest_gene(dataset.var[["Chromosome","Start","End"]])
 # %%
 design = np.ones((dataset.X.shape[0], 1))
 # design = np.concatenate([design, dataset.obs["FRIP"].values.reshape(-1,1)], axis=1)
-cm.set_design_matrix(dataset, design)
-cm.compute_size_factors(dataset)
-kept = cm.trim_low_counts(dataset)
+sp.load.set_design_matrix(dataset, design)
+sp.tools.compute_size_factors(dataset, method="deseq")
+kept = sp.tools.trim_low_counts(dataset)
 dataset = dataset[:, kept].copy()
-cm.fit_mv_trendline(dataset)
-cm.computeResiduals(dataset)
-hv = cm.feature_selection_elbow(dataset)
-cm.compute_PA_PCA(dataset, feature_mask=hv, max_rank=100, plot=True)
+sp.tools.computeResiduals(dataset)
+hv = sp.tools.feature_selection_elbow(dataset)
+sp.tools.compute_PA_PCA(dataset, feature_mask=hv, max_rank=100, plot=True)
 # %%
-cm.compute_UMAP(dataset, umap_params={"n_neighbors":30})
+sp.tools.compute_UMAP(dataset, umap_params={"n_neighbors":30, "min_dist":0.5})
 # %%
-cm.plot_reduced_dim(dataset, which="X_umap", points_labels=dataset.obs["label"], 
+sp.plots.plot_reduced_dim(dataset, which="X_umap", points_labels=dataset.obs["label"], 
                             label_type="categorical")
-cm.plot_reduced_dim(dataset, which="X_pca", points_labels=dataset.obs["label"], 
+sp.plots.plot_reduced_dim(dataset, which="X_pca", points_labels=dataset.obs["label"], 
                             label_type="categorical")
-cm.plot_reduced_dim(dataset, which="X_pca", points_labels=dataset.obs["FRIP"], 
+sp.plots.plot_reduced_dim(dataset, which="X_pca", points_labels=dataset.obs["FRIP"], 
                             label_type="numeric")
 # %%
 import scanpy as sc
@@ -53,10 +51,9 @@ with rc_context({'figure.figsize': (5, 5)}):
     sc.pl.umap(dataset, color='FRIP', legend_loc='on data',
                 legend_fontsize=5, legend_fontoutline=0.1, s=10.0,
                 title='TCGA-ATAC UMAP', palette='tab20')
-# %%
-from superPackage.utils.matrix_utils import looKnnCV
-looKnnCV(dataset.obsm["X_pca"], pd.factorize(dataset.obs["label"])[0], "correlation" ,1)
-# %%
+
+# %% 
+sp.plots.mega_heatmap(dataset[:, hv], layer="residuals", label_col="label", vmin=-3, vmax=3)
 # %%
 import scanpy as sc
 from matplotlib.pyplot import rc_context
@@ -66,7 +63,7 @@ with rc_context({'figure.figsize': (5, 5)}):
                 legend_fontsize=5, legend_fontoutline=0.1, s=10.0,
                 title='TCGA-ATAC UMAP', palette='tab20')
 # %%
-from superPackage.utils.diff_expr import DESeq2, t_test
+from muffin.utils.diff_expr import DESeq2, t_test
 lumA = dataset.obs["subtype"] == "LumB"
 lumB = dataset.obs["subtype"] == "LumA"
 subset = dataset[~dataset.obs["subtype"].isna()]

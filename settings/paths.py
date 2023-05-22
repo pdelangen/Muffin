@@ -11,6 +11,9 @@ scAtacMapqual= rootFolder + "scATAC/atac_v1_pbmc_10k_singlecell.csv"
 # scRNA-seq
 scRNAseqPol2 = rootFolder + "10k_pbmc_pol2_atlas/filtered_feature_bc_matrix/"
 scRNAseqGenes = rootFolder + "10k_pbmc_gene/filtered_feature_bc_matrix/"
+# immune chip
+immuneChipPath = rootFolder + "immune_chip/"
+# 
 chipBAM = rootFolder + "bam_chip/chip/"
 inputBAM = rootFolder + "bam_chip/input/"
 chipmetadata = rootFolder + "bam_chip/metadata.tsv"
