@@ -235,6 +235,6 @@ def mega_clustermap(matrix, rowOrder=None, colOrder=None, rowLink=None, colLink=
         for i in range(len(eq)):
             legend = Patch(color=palette[i], label=eq[i])
             patches.append(legend)
-        fig.legend(handles=patches, prop={'size': 6}, 
-                    loc="upper center", ncol=5)
+        fig.legend(handles=patches, prop={'size': 6}, bbox_to_anchor=(0,1.05,1,0.2),
+                    loc="upper center", mode="expand", ncol=5)
     return fig, ax

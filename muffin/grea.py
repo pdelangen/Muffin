@@ -118,7 +118,7 @@ class pyGREAT:
         self.upstream = upstream
         self.downstream = downstream
         self.geneRegulatory = regLogicGREAT(upstream, downstream, distal)(self.transcripts, self.chrInfo)
-        self.geneRegulatory.drop("Strand", 1, inplace=True)
+        self.geneRegulatory.drop("Strand", axis=1, inplace=True)
         self.geneRegulatory.index = self.geneRegulatory["gene_name"]
         self.geneRegulatory = self.geneRegulatory[~self.geneRegulatory.index.duplicated(False)]
         self.validGenes = self.geneRegulatory["gene_name"]
@@ -134,7 +134,7 @@ class pyGREAT:
 
 
 
-    def getNearestGene(self, query, max_dist=np.inf):
+    def get_nearest_gene(self, query, max_dist=np.inf):
         """
         Get the nearest gene for each row. 
         If it can't be retrieved will be named "None" (str).
@@ -142,15 +142,11 @@ class pyGREAT:
         Parameters
         ----------
         query : pandas Dataframe or PyRanges
-            _description_
+            Set of genomic regions.
         
         max_dist : integer or float
             Maximum distance for association, default np.inf
 
-        Returns
-        -------
-        _type_
-            _description_
         """
         if not isinstance(query, pd.DataFrame):
             query = query.as_df()
@@ -187,7 +183,7 @@ class pyGREAT:
         labels: ndarray
             Each corresponding label.
         """
-        names = self.getNearestGene(query, max_dist=self.distal)
+        names = self.get_nearest_gene(query, max_dist=self.distal)
         groups = names.groupby('gene_name')
         # add a count for each duplicate value within each group
         names['count'] = groups.cumcount() + 1
@@ -197,7 +193,7 @@ class pyGREAT:
         names = names.drop(['gene_name', 'count'], axis=1)
         return names["col1_new"].values
 
-    def findEnrichedGenes(self, query, background=None):
+    def find_enriched_genes(self, query, background=None):
         """
         Find enriched terms in genes near query.
 
@@ -249,14 +245,14 @@ class pyGREAT:
         return geneEnriched.sort_values("P-value")
         
     
-    def findGenesForGeneSet(self, term, enrichedGeneTab, alpha=0.05):
+    def find_genes_for_geneset(self, term, enrichedGeneTab, alpha=0.05):
         """
         Find genes enriched for a particular geneset
 
         Parameters
         ----------
         term : str
-            Name of the GO term.
+            Name of the GSEA term.
         enrichedGeneTab : pandas dataframe
             Results of findEnrichedGenes.
         alpha : float, optional
@@ -275,7 +271,7 @@ class pyGREAT:
 
 
 
-    def findEnriched(self, query, background=None, expected_mappability=0.85, minGenes=3, maxGenes=1000, cores=-1):
+    def find_enriched(self, query, background=None, expected_mappability=0.85, minGenes=3, maxGenes=1000, cores=-1):
         """
         Find enriched terms in genes near query.
 
@@ -338,7 +334,7 @@ class pyGREAT:
         maxBatch = min(int(0.25*maxBatch/cores)+1,256)
         hitsPerGO = np.sum(csr_array(obsMatrix.sparse.to_coo()) * observed.values.ravel(), axis=1)[trimmed.values]
         # Fit a Negative Binomial GLM for each annotation, and evaluate wald test p-value for each gene annotation
-        with Parallel(n_jobs=cores, batch_size=maxBatch, max_nbytes=None, mmap_mode=None) as pool:
+        with Parallel(n_jobs=cores, batch_size=maxBatch, verbose=1, max_nbytes=None, mmap_mode=None) as pool:
             results = pool(delayed(stats.fitNBinomModel)(hasAnnot, endog, expected, gos, queryCounts.index) for gos, hasAnnot in obsMatrix[trimmed].iterrows())
         # Manually kill workers afterwards or they'll just stack up with multiple runs
         get_reusable_executor().shutdown(wait=False, kill_workers=True)
@@ -362,7 +358,7 @@ class pyGREAT:
         results.sort_values(by="P(Beta > 0)", inplace=True)
         return results
 
-    def plotEnrichs(self, enrichDF, title="", by="P(Beta > 0)", alpha=0.05, topK=10, savePath=None):
+    def plot_enrichs(self, enrichDF, title="", by="P(Beta > 0)", alpha=0.05, topK=10, savePath=None):
         """
         Draw Enrichment barplots
 
@@ -395,7 +391,7 @@ class pyGREAT:
             fig.savefig(muffin.params["autosave_plots"] + "/barplot_enrich" + muffin.params["autosave_format"], bbox_inches="tight")
         return fig, ax
 
-    def clusterTreemap(self, enrichDF, alpha=0.05, score="-log10(qval)", 
+    def cluster_treemap(self, enrichDF, alpha=0.05, score="-log10(qval)", 
                        metric="yule", resolution=1.0, output=None):
         """
         Plot a treemap of clustered gene set terms.
@@ -422,7 +418,7 @@ class pyGREAT:
         if len(enrichDF) == 0:
             return
         # Remove unused columns and keep enriched rows
-        nz = csr_array(self.mat.loc[sig.index].sparse.to_coo()).sum(axis=0) > 1
+        nz = csr_array(self.mat.loc[sig.index].sparse.to_coo()).sum(axis=0) >= 1
         simplifiedMat = self.mat.loc[sig.index, nz].sparse.to_dense().values
         clusters = cluster.graphClustering(simplifiedMat, 
                                            metric, k=int(np.sqrt(len(sig))), r=resolution, snn=True, 
@@ -443,8 +439,8 @@ class pyGREAT:
             fig.write_image(output)
             fig.write_html(output + ".html")
         if muffin.params["autosave_plots"] is not None:
-            fig.write_image(muffin.params["autosave_plots"] + "/barplot_enrich" + muffin.params["autosave_format"])
-            fig.write_html(muffin.params["autosave_plots"] + "/barplot_enrich" + muffin.params["autosave_format"] + ".html")
+            fig.write_image(muffin.params["autosave_plots"] + "/cluster_treemap" + muffin.params["autosave_format"])
+            fig.write_html(muffin.params["autosave_plots"] + "/cluster_treemap" + muffin.params["autosave_format"] + ".html")
 
 
 

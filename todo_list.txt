@@ -1,2 +1,0 @@
-- Add heatmap
-- Check implementation for SAF bam reading

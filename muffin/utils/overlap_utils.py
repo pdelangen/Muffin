@@ -10,7 +10,7 @@ from . import plot_utils
 def dfToPrWorkaround(df, useSummit=True):
     # There is an issue when converting a dataframe to a pyrange
     # Convert to separate np array beforehand
-    if type(df) == pr.pyranges.PyRanges:
+    if type(df) == pr.PyRanges:
         return df
     if useSummit:
         return pr.PyRanges(chromosomes=df.iloc[:,0].values.ravel(), 

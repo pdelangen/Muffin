@@ -21,6 +21,13 @@ def rescale_input_quantile(dataset, plot=False):
     For data with input only !
     Centers and scales fold changes by modifying the input count matrix.
     Novel scaled input is stored in dataset.layers["normalization_factors"]
+
+    Parameters
+    ----------
+    dataset : AnnData
+        Dataset in AnnData format, with input layer filled
+    plot : bool, optional
+        Whether to plot or not, by default False
     """
     # Scale factors (only used for visualisation)
     dataset.obs["size_factors"] = np.sum(dataset.X, axis=1)
@@ -112,6 +119,13 @@ def rescale_input_center_scale(dataset, plot=True):
     For data with input only !
     Centers and scales fold changes by modifying the input count matrix.
     Novel scaled input is stored in dataset.layers["normalization_factors"]
+
+    Parameters
+    ----------
+    dataset : AnnData
+        Dataset in AnnData format, with input layer filled
+    plot : bool, optional
+        Whether to plot or not, by default False
     """
     # Scale factors (only used for visualisation)
     dataset.obs["size_factors"] = np.sum(dataset.X, axis=1)
@@ -155,8 +169,40 @@ def rescale_input_center_scale(dataset, plot=True):
             meanInput = 1.0 / len(dataset.X) * dataset.obs["size_factors_input"].values
         dataset.layers["normalization_factors"][:, i] = np.where(dataset.layers["normalization_factors"][:, i] < 0.5, 
                                                         meanInput, dataset.layers["normalization_factors"][:, i])
+    # Raw plot
+    if plot:
+        plt.figure(dpi=muffin.params["figure_dpi"])
+    for i in range(len(dataset.X)):
+        lfc = np.log(np.maximum(1e-1,dataset.X[i])/dataset.layers["normalization_factors"][i])
+        if plot:
+            plt.plot((np.sort(lfc)), linewidth=0.5)
+    if plot:
+        plt.xlim(plt.xlim()[0], plt.xlim()[1])
+        plt.ylabel("Normalized log(Fold Change)")
+        plt.xlabel("Log(Fold Change) rank")
+        plt.hlines(0.0, plt.xlim()[0], plt.xlim()[1])
+        if muffin.params["autosave_plots"] is not None:
+            plt.savefig(muffin.params["autosave_plots"]+"/norm_raw"+muffin.params["autosave_format"],
+                        bbox_inches="tight")
+        plt.show()
     dataset.layers["normalization_factors"] *= np.exp(mean_lfc)[:, None]
     ipStrength = ipStrength/np.median(ipStrength)
+    # Center-only plot
+    if plot:
+        plt.figure(dpi=muffin.params["figure_dpi"])
+    for i in range(len(dataset.X)):
+        lfc = np.log(np.maximum(1e-1,dataset.X[i])/dataset.layers["normalization_factors"][i])
+        if plot:
+            plt.plot((np.sort(lfc)), linewidth=0.5)
+    if plot:
+        plt.xlim(plt.xlim()[0], plt.xlim()[1])
+        plt.ylabel("Normalized log(Fold Change)")
+        plt.xlabel("Log(Fold Change) rank")
+        plt.hlines(0.0, plt.xlim()[0], plt.xlim()[1])
+        if muffin.params["autosave_plots"] is not None:
+            plt.savefig(muffin.params["autosave_plots"]+"/norm_input_center"+muffin.params["autosave_format"],
+                        bbox_inches="tight")
+        plt.show()
     # Re-scale input to correct LFC curve
     if plot:
         plt.figure(dpi=muffin.params["figure_dpi"])
@@ -178,6 +224,7 @@ def rescale_input_center_scale(dataset, plot=True):
             plt.savefig(muffin.params["autosave_plots"]+"/norm_input_center_scale"+muffin.params["autosave_format"],
                         bbox_inches="tight")
         plt.show()
+
     
 
 def trim_low_counts(dataset, min_exp=3, min_counts=1, min_mean=0.0):
@@ -188,6 +235,8 @@ def trim_low_counts(dataset, min_exp=3, min_counts=1, min_mean=0.0):
 
     Parameters
     ----------
+    dataset : AnnData
+        Dataset in AnnData format.
     min_exp : int, optional
         Minimum number of experiment to have at least min_counts, by default 3, at least 1
     min_counts : int, optional
@@ -228,6 +277,8 @@ def pseudo_peak_calling(dataset, alpha=0.05, minFC=1.0, minExp=3):
 
     Parameters
     ----------
+    dataset : AnnData
+        Dataset in AnnData format.
     alpha : float, optional
         Peak fdr threshold, by default 0.05
     minFC : float, optional
@@ -256,31 +307,35 @@ def pseudo_peak_calling(dataset, alpha=0.05, minFC=1.0, minExp=3):
     return kept
 
 def feature_selection_chisquare(dataset, alpha=0.05):
-    """_summary_
+    """
+    Returns a boolean array of the features which do not passes the 
+    sum of squared residuals chisquared goodness of fit test.
 
     Parameters
     ----------
     dataset : AnnData
-        _description_
+        Dataset in AnnData format.
     alpha : float, optional
-        _description_, by default 0.05
+        FDR, by default 0.05
 
     Returns
     -------
-    _type_
-        _description_
+    boolean ndarray
+        Boolean array of highly variable features.
     """     
     ssr = np.sum(np.square(dataset.layers["residuals"]),axis=0)
     pval = sc.stats.chi2(dataset.obsm["design"].shape[0]-dataset.obsm["design"].shape[1]).sf(ssr)
     return fdrcorrection(pval, alpha=alpha)[0]
 
-def feature_selection_topK(dataset, k_features):
+def feature_selection_top_k(dataset, k_features):
     """
     Returns a boolean array of the k features with the 
     largest sum of squared residuals.
 
     Parameters
     ----------
+    dataset : AnnData
+        Dataset in AnnData format.
     k_features : int
         Number of features to keep
 
@@ -305,6 +360,8 @@ def feature_selection_elbow(dataset, plot:bool=True, subsample=20000):
 
     Parameters
     ----------
+    dataset : AnnData
+        Dataset in AnnData format.
     plot : bool, optional
         Whether to plot the ranked SSR curve with the ankle point,
         by default True
@@ -352,6 +409,28 @@ def feature_selection_elbow(dataset, plot:bool=True, subsample=20000):
     return sds >= min_ssr
 
 def compute_size_factors(dataset, method="top_fpkm"):
+    """
+    Compute size factors.
+
+    Parameters
+    ----------
+    dataset : AnnData
+        Dataset in AnnData format.
+    method : str, optional
+        Method to use, by default "top_fpkm". Available methods:
+        - "top fpkm" : Selects top 5% most detectable variables and 
+                       computes sum of counts normalization.
+        - "fpkm" : Computes sum of counts normalization.
+        - "scran" : Selects top 5% most detectable variables and 
+                    computes scran pooling and deconvolution normalization.
+        - "deseq" : Applies median of ratios, works well with deeply sequenced
+                    datasets. Will raise an error if not suitable.
+        - "fpkm_uq" : Computes Upper Quartile normalization.
+
+    Returns
+    -------
+    dataset : AnnData
+    """    
     if method == "top_fpkm":
         values = normalization.top_detected_sum_norm(dataset.X)
     elif method == "scran":
@@ -367,7 +446,7 @@ def compute_size_factors(dataset, method="top_fpkm"):
     dataset.obs["size_factors"] = (values / np.mean(values)).astype("float32")
     return dataset
 
-def computeResiduals(dataset, residuals="anscombe", clip=np.inf, subSampleEst=2000, maxThreads=-1, verbose=True, plot=True):
+def compute_residuals(dataset, residuals="anscombe", clip=np.inf, subSampleEst=2000, maxThreads=-1, verbose=True, plot=True):
     """
     Compute residuals from the regularized NB model for each feature.
 
@@ -386,17 +465,17 @@ def computeResiduals(dataset, residuals="anscombe", clip=np.inf, subSampleEst=20
 
     Returns
     -------
-    self
+    dataset : AnnData
     """
     np.random.seed(42)
     if "normalization_factors" not in dataset.layers.keys():
-        dataset.var["means"] = np.apply_along_axis(stats.normAndMean, 0, dataset.X, 
-                                                        dataset.obs["size_factors"].values)
+        dataset.var["means"] = stats.computeMeans(dataset.X, 
+                                                  dataset.obs["size_factors"].values)
     else:
         dataset.var["means"] = stats.computeMeanNormFactors(dataset.X, 
                                                             dataset.layers["normalization_factors"])
     if "normalization_factors" not in dataset.layers.keys():
-        dataset.var["variances"] = np.apply_along_axis(stats.normAndVar, 0, dataset.X, 
+        dataset.var["variances"] = stats.computeVar(dataset.X, 
                                                     dataset.obs["size_factors"].values)
     else:
         dataset.var["variances"] = stats.computeVarNormFactors(dataset.X, 
@@ -473,7 +552,7 @@ def computeResiduals(dataset, residuals="anscombe", clip=np.inf, subSampleEst=20
         plt.close()
     return dataset
     
-def compute_PA_PCA(dataset, layer="residuals", feature_mask=None, perm=3, alpha=0.01, 
+def compute_pa_pca(dataset, layer="residuals", feature_mask=None, perm=3, alpha=0.01, 
                     solver="randomized", whiten=True,
                     max_rank=None, mincomp=2, plot=False):
     """
@@ -537,9 +616,9 @@ def compute_PA_PCA(dataset, layer="residuals", feature_mask=None, perm=3, alpha=
         for i in range(len(dstat_null)):
             plt.plot(np.arange(len(dstat_obs))+1, dstat_null[i], linewidth=0.2)
         plt.xlabel("PCA rank")
-        plt.ylabel("Eigenvalues / Explained variance (log scale)")
+        plt.ylabel("Explained variance (log scale)")
         plt.yscale("log")
-        plt.legend(["Observed eigenvalues"])
+        plt.legend(["Observed eigenvalues", "Randomized eigenvalues"])
         plt.xlim(1,r_est*1.2)
         plt.ylim(np.min(dstat_null[:, :int(r_est*1.2)])*0.95, dstat_obs.max()*1.05)
         if muffin.params["autosave_plots"] is not None:
@@ -547,7 +626,7 @@ def compute_PA_PCA(dataset, layer="residuals", feature_mask=None, perm=3, alpha=
                         bbox_inches="tight")
         plt.show()
 
-def compute_UMAP(dataset, on="reduced_dims", which="X_pca", feature_mask=None, umap_params={}):
+def compute_umap(dataset, on="reduced_dims", which="X_pca", feature_mask=None, umap_params={}):
     """
     Compute UMAP and stores it under dataset.reduced_dims["X_umap"].
 
@@ -655,27 +734,26 @@ def cluster_rows_leiden(dataset, on="reduced_dims", which="X_pca", feature_mask=
 def differential_expression_A_vs_B(dataset, category, ref_category, alternative="two-sided",
                                    method="auto"):
     """
+    Performs differential expression between two categories.
+    Results will be stored in dataset.varm["DE_results"],
+    and for parity with scanpy, in dataset.uns["rank_genes_groups"].
 
     Parameters
     ----------
-    dataset : _type_
-        _description_
-    category : _type_
-        _description_
-    ref_category : _type_
-        _description_
+    dataset : AnnData
+        Dataset in AnnData format.
+    category : str
+        Name of the obs column to use for grouping. If more than two unique values
+        are present, will raise an error.
+    ref_category : str
+        Name of the reference category used for log fold change computations.
     method : str, optional
-        _description_, by default "auto"
-
-    Returns
-    -------
-    _type_
-        _description_
-
-    Raises
-    ------
-    ValueError
-        _description_
+        Method to be used for differential expression, by default "auto".
+        Available methods:
+        - "auto" : Uses deseq if dataset size > 50, t-test otherwise.
+        - "deseq": Uses DESeq2 with the supplied design matrix beforehand.
+        - "t-test": Performs welsh t-test on residuals.
+        - "wilcoxon": Performs mann-whitney u-test on residuals (prefer using t-test).
     """
     if method == "auto":
         if len(dataset) > 50:
@@ -714,6 +792,7 @@ def differential_expression_A_vs_B(dataset, category, ref_category, alternative=
                                factors)
     res.index = dataset.var_names
     dataset.varm["DE_results"] = res
+    # Same format as scanpy
     ordered = res.sort_values("z-score", ascending=False)
     reverseOrdered = res.sort_values("z-score", ascending=True)
     dataset.uns["rank_genes_groups"] = dict()

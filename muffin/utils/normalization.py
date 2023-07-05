@@ -21,6 +21,7 @@ def scran_norm(counts):
 
 @nb.njit()
 def mor(counts, avg):
+    # Use a jitted function to avoid re-storing the entire dataset in memory, also faster than apply
     sf = np.zeros(len(counts))
     for i in range(len(counts)):           
         sf[i] = np.nanmedian(counts[i][avg.nonzero()]/avg[avg.nonzero()])

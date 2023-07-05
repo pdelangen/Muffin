@@ -7,6 +7,7 @@ import pandas as pd
 import pyranges as pr
 from .utils import utils
 import warnings
+import muffin
 
 def dataset_from_arrays(count_table, row_names=None, col_names=None, input_count_table=None,
                         random_loc_count_table=None, random_loc_input_table=None):
@@ -72,7 +73,7 @@ def dataset_from_arrays(count_table, row_names=None, col_names=None, input_count
 
 def dataset_from_bam(bam_paths, genomic_regions=None, genomic_regions_path=None, row_names=None, col_names=None,
                     featureCounts_params=None, isBEDannotation=True, input_bam_paths=None, 
-                    n_random_input=10000, chromsizes=None, tmpDir="tmp_pkg"):
+                    n_random_input=10000, chromsizes=None):
     """
     Initialize count matrices using BAM files and query random regions.
 
@@ -123,7 +124,7 @@ def dataset_from_bam(bam_paths, genomic_regions=None, genomic_regions_path=None,
     from rpy2.robjects.conversion import localconverter
     from rpy2.robjects.packages import importr
     subread = importr("Rsubread")
-    utils.createDir(tmpDir)
+    utils.createDir(muffin.params["temp_dir"])
     # Append random regions to bed
     if input_bam_paths is not None:
         if chromsizes is None:
@@ -154,11 +155,11 @@ def dataset_from_bam(bam_paths, genomic_regions=None, genomic_regions_path=None,
             col_names = np.arange(len(bedFile))
         bedFile.loc[:, "GeneID"] = col_names
         bedFile = pd.concat([bedFile, randomRegions])
-        bedFile.to_csv(tmpDir + "/ann.saf", sep="\t", index=None)
-        genomic_regions_path = tmpDir + "/ann.saf"
+        bedFile.to_csv(muffin.params["temp_dir"] + "/ann.saf", sep="\t", index=None)
+        genomic_regions_path = muffin.params["temp_dir"] + "/ann.saf"
     else:
-        genomic_regions.to_csv(tmpDir + "/ann.saf", sep="\t", index=None)
-        genomic_regions_path = tmpDir + "/ann.saf"
+        genomic_regions.to_csv(muffin.params["temp_dir"] + "/ann.saf", sep="\t", index=None)
+        genomic_regions_path = muffin.params["temp_dir"] + "/ann.saf"
     paramsDict = {"files":ro.vectors.StrVector(bam_paths)}
     # Count reads over genomic regions
     paramsDict["annot.ext"] = genomic_regions_path
@@ -244,7 +245,7 @@ def set_design_matrix(dataset, design):
 
 def set_size_factors(dataset, values):
     """
-    Use custom size factors for the model.
+    Load custom size factors for the model.
 
     Parameters
     ----------
@@ -252,21 +253,18 @@ def set_size_factors(dataset, values):
         Size factors, e.g. np.sum(model.matrices["counts"], axis=1).
         They will be standardized to unit mean to ensure numerical
         stability when fitting models.
-
-    Returns
-    -------
-    self
     """
     dataset.obs["size_factors"] = (values.astype("float64") / np.mean(values.astype("float64"))).astype("float32")
 
 def set_normalization_factors(dataset, normalization_factors):
-    """_summary_
+    """
+    Load normalization factors from a numpy array
 
     Parameters
     ----------
     dataset : _type_
         _description_
-    normalization_factors : float ndarray
-        _description_
+    normalization_factors : float ndarray (observations x variables)
+        Normalization factors per observation, per variable
     """    
     dataset.obs["normalization_factors"] = normalization_factors

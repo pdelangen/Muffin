@@ -8,6 +8,10 @@ gencode = rootFolder + "genome_annot/gencode.v38.annotation.gtf"
 # scATAC
 scAtacHD5 = rootFolder + "scATAC/atac_v1_pbmc_10k_filtered_peak_bc_matrix.h5"
 scAtacMapqual= rootFolder + "scATAC/atac_v1_pbmc_10k_singlecell.csv"
+# Cancer hallmarks
+atac_cancer_meta = "/shared/projects/pol2_chipseq/data_newPkg/tcga_atac/sequencing_stats.csv"
+atac_cancer_table = "/shared/projects/pol2_chipseq/data_newPkg/tcga_atac/atac_table.txt"
+cancerHallmarks = rootFolder + "tcga_atac/hallmark_cancer_chg.gmt"
 # scRNA-seq
 scRNAseqPol2 = rootFolder + "10k_pbmc_pol2_atlas/filtered_feature_bc_matrix/"
 scRNAseqGenes = rootFolder + "10k_pbmc_gene/filtered_feature_bc_matrix/"
