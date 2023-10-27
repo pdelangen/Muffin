@@ -34,10 +34,11 @@ def rescale_input_quantile(dataset, plot=False):
     dataset.obs["size_factors"] = dataset.obs["size_factors"]/dataset.obs["size_factors"].mean()
     dataset.obs["size_factors_input"] = np.sum(dataset.layers["input"], axis=1)
     dataset.obs["size_factors_input"] = dataset.obs["size_factors_input"]/dataset.obs["size_factors_input"].mean()
-    mean_lfc = np.zeros(len(dataset.obsm["design"]))
-    ipStrength = np.zeros(len(dataset.obsm["design"]))
+    mean_lfc = np.zeros(len(dataset))
+    ipStrength = np.zeros(len(dataset))
        # Find reference point for fold change over input
     for i in range(len(dataset.X)):
+        print(dataset.obs_names[i])
         order1 = np.argsort(dataset.uns["input_random"][i])[::-1]
         order = np.argsort(dataset.uns["counts_random"][i][order1], kind="stable")
         sortedCounts = dataset.uns["counts_random"][i][order1][order]
@@ -47,6 +48,12 @@ def rescale_input_quantile(dataset, plot=False):
         pj = sumCounts/np.sum(sortedCounts)
         qj = sumInput/np.sum(sortedInput)
         amax = np.argmax(qj-pj)
+        plt.figure()
+        plt.plot(pj)
+        plt.plot(qj)
+        plt.vlines(amax, ymin=0, ymax=0.5)
+        plt.show()
+        plt.close() 
         if sumInput[amax] <= 10 or sumCounts[amax] <= 10:
             # take full sum when the method does not work well
             # and takes the first few value
@@ -132,8 +139,8 @@ def rescale_input_center_scale(dataset, plot=True):
     dataset.obs["size_factors"] = dataset.obs["size_factors"]/dataset.obs["size_factors"].mean()
     dataset.obs["size_factors_input"] = np.sum(dataset.layers["input"], axis=1)
     dataset.obs["size_factors_input"] = dataset.obs["size_factors_input"]/dataset.obs["size_factors_input"].mean()
-    mean_lfc = np.zeros(len(dataset.obsm["design"]))
-    ipStrength = np.zeros(len(dataset.obsm["design"]))
+    mean_lfc = np.zeros(len(dataset))
+    ipStrength = np.zeros(len(dataset))
     # Find reference point for fold change over input
     for i in range(len(dataset.X)):
         order1 = np.argsort(dataset.uns["input_random"][i])[::-1]
@@ -145,6 +152,14 @@ def rescale_input_center_scale(dataset, plot=True):
         pj = sumCounts/np.sum(sortedCounts)
         qj = sumInput/np.sum(sortedInput)
         amax = np.argmax(qj-pj)
+        """ 
+        print(dataset.obs_names[i])
+        plt.figure()
+        plt.plot(pj)
+        plt.plot(qj)
+        plt.vlines(amax, ymin=0, ymax=0.5)
+        plt.show()
+        plt.close()  """
         if sumInput[amax] <= 10 or sumCounts[amax] <= 10:
             # take full sum when the method does not work well
             # and takes the first few value
@@ -268,7 +283,7 @@ def remove_low_peaks(dataset, minExp=3):
     """    
     pass
 
-def pseudo_peak_calling(dataset, alpha=0.05, minFC=1.0, minExp=3):
+def pseudo_peak_calling(dataset, alpha=0.05, minFC=0.5, minExp=2):
     """
     Performs a pseudo-peak calling using the fitted NB model
     and normalized input.
@@ -418,6 +433,7 @@ def compute_size_factors(dataset, method="top_fpkm"):
         Dataset in AnnData format.
     method : str, optional
         Method to use, by default "top_fpkm". Available methods:
+
         - "top fpkm" : Selects top 5% most detectable variables and 
                        computes sum of counts normalization.
         - "fpkm" : Computes sum of counts normalization.
@@ -567,9 +583,8 @@ def compute_pa_pca(dataset, layer="residuals", feature_mask=None, perm=3, alpha=
     feature_mask : boolean ndarray or None, optional
         Subset of features to use for Umap, by default None.
     
-
     perm: int (default 3)
-        Number of permutations. On large matrices (row * col > 1,000,000) the eigenvalues are 
+        Number of permutations. On large matrices (row * col > 100,000) the eigenvalues are 
         very stable, so there is no need to use a large number of permutations,
         and only one permutation can be a reasonable choice on large matrices.
         On smaller matrices the number of permutations should be increased.
@@ -696,7 +711,7 @@ def cluster_rows_leiden(dataset, on="reduced_dims", which="X_pca", feature_mask=
         by default None
     metric : str, optional
         Metric to use for kNN search, by default "correlation"
-    k : str, optional
+    k : "auto" or int, optional
         Number of nearest neighbors to find, 
         by default "auto" uses 5*nFeatures^0.2 as a rule of thumb.
     r : float, optional

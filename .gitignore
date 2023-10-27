@@ -14,3 +14,9 @@ muffin/__pycache__
 atac_tcga_results
 h3k4me3_results
 tmp_muffin
+_build
+docs
+build_
+.vscode
+h3k4me3_results_noniput
+dist

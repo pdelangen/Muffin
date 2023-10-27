@@ -1,0 +1,72 @@
+alabaster==0.7.13
+Babel==2.12.1
+beautifulsoup4 @ file:///croot/beautifulsoup4-split_1681493039619/work
+brotlipy==0.7.0
+build==1.0.3
+certifi @ file:///croot/certifi_1683875369620/work/certifi
+cffi @ file:///opt/conda/conda-bld/cffi_1642701102775/work
+chardet @ file:///tmp/build/80754af9/chardet_1607706775000/work
+charset-normalizer @ file:///tmp/build/80754af9/charset-normalizer_1630003229654/work
+colorama @ file:///tmp/build/80754af9/colorama_1607707115595/work
+conda==4.12.0
+conda-build==3.23.0
+conda-content-trust @ file:///tmp/build/80754af9/conda-content-trust_1617045594566/work
+conda-package-handling @ file:///tmp/build/80754af9/conda-package-handling_1649105784853/work
+contourpy==1.0.7
+cryptography @ file:///tmp/build/80754af9/cryptography_1639414572950/work
+cycler==0.11.0
+docutils==0.18.1
+filelock @ file:///croot/filelock_1672387128942/work
+fonttools==4.39.4
+glob2 @ file:///home/linux1/recipes/ci/glob2_1610991677669/work
+idna @ file:///tmp/build/80754af9/idna_1637925883363/work
+imagesize==1.4.1
+importlib-metadata==6.7.0
+importlib-resources==5.12.0
+Jinja2 @ file:///croot/jinja2_1666908132255/work
+kaplanmeier==0.1.8
+kiwisolver==1.4.4
+libarchive-c @ file:///tmp/build/80754af9/python-libarchive-c_1617780486945/work
+mamba @ file:///home/conda/feedstock_root/build_artifacts/mamba_1629310336926/work
+MarkupSafe @ file:///opt/conda/conda-bld/markupsafe_1654597864307/work
+matplotlib==3.7.1
+matplotlib-venn==0.11.9
+numpy==1.24.3
+numpydoc==1.5.0
+packaging==23.1
+pandas==2.0.3
+Pillow==9.5.0
+pkginfo @ file:///croot/pkginfo_1679431160147/work
+psutil @ file:///opt/conda/conda-bld/psutil_1656431268089/work
+pycosat==0.6.3
+pycparser @ file:///tmp/build/80754af9/pycparser_1636541352034/work
+Pygments==2.15.1
+pyOpenSSL @ file:///opt/conda/conda-bld/pyopenssl_1643788558760/work
+pyparsing==3.0.9
+pyproject_hooks==1.0.0
+PySocks @ file:///tmp/build/80754af9/pysocks_1605305812635/work
+python-dateutil==2.8.2
+pytz @ file:///croot/pytz_1671697431263/work
+PyYAML @ file:///croot/pyyaml_1670514731622/work
+requests @ file:///opt/conda/conda-bld/requests_1641824580448/work
+ruamel-yaml-conda @ file:///tmp/build/80754af9/ruamel_yaml_1616016711199/work
+scipy==1.10.1
+seaborn==0.12.2
+six @ file:///tmp/build/80754af9/six_1644875935023/work
+snowballstemmer==2.2.0
+soupsieve @ file:///croot/soupsieve_1680518478486/work
+Sphinx==6.2.1
+sphinx-rtd-theme==1.2.2
+sphinxcontrib-applehelp==1.0.4
+sphinxcontrib-devhelp==1.0.2
+sphinxcontrib-htmlhelp==2.0.1
+sphinxcontrib-jquery==4.1
+sphinxcontrib-jsmath==1.0.1
+sphinxcontrib-qthelp==1.0.3
+sphinxcontrib-serializinghtml==1.1.5
+toml @ file:///tmp/build/80754af9/toml_1616166611790/work
+tomli==2.0.1
+tqdm @ file:///opt/conda/conda-bld/tqdm_1647339053476/work
+tzdata==2023.3
+urllib3 @ file:///opt/conda/conda-bld/urllib3_1643638302206/work
+zipp==3.15.0

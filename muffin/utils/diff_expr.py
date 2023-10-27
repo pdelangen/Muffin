@@ -23,21 +23,18 @@ def DESeq2(counts, sf, labels, to_regress):
         formula = "~1+Category+" + "+".join(["V"+str(i) for i in range(non_intercepts.sum())])
     else:
         formula = "~1+Category"
-    print(formula)
-    print(infos)
     with localconverter(ro.default_converter + pandas2ri.converter + numpy2ri.converter):
         dds = deseq.DESeqDataSetFromMatrix(countData=countTable, colData=infos, design=ro.Formula(formula))
-        deseq.DESeq(dds, test="wald")
-        print(deseq.resultsNames(dds))
-        try:
-            res = deseq.lfcShrink(dds, coef=2)
-        except:
-            res = deseq.results(dds)
-            warnings.warn("LFC shrinkage failed!")
+    dds = deseq.DESeq(dds)
+    try:
+        res = deseq.lfcShrink(dds, coef=2)
+    except:
+        res = deseq.results(dds)
+        warnings.warn("LFC shrinkage failed!")
     res = pd.DataFrame(res.slots["listData"], index=res.slots["listData"].names).T
     res["padj"] = np.nan_to_num(res["padj"], nan=1.0)
     # Add pseudo z-score for consistency with scanpy
-    res["z-score"] = np.abs(norm().isf(res["pvalue"].values*0.5+1e-300,1.0-1e-20)) * np.sign(res["log2FoldChange"].values)
+    res["z-score"] = np.abs(norm().isf(np.clip(res["pvalue"].values*0.5,1e-300,1.0-1e-18))) * np.sign(res["log2FoldChange"].values)
     return res
 
 
@@ -73,7 +70,7 @@ def DESeq2_input(counts, input_mat, labels, to_regress):
     res = pd.DataFrame(res.slots["listData"], index=res.slots["listData"].names).T
     res["padj"] = np.nan_to_num(res["padj"], nan=1.0)
     # Add pseudo z-score for consistency with scanpy
-    res["z-score"] = np.abs(norm().isf(np.clip(res["pvalue"].values*0.5,1e-300,1.0-1e-20))) * np.sign(res["log2FoldChange"].values)
+    res["z-score"] = np.abs(norm().isf(np.clip(res["pvalue"].values*0.5,1e-300,1.0-1e-18))) * np.sign(res["log2FoldChange"].values)
     return res
 
 

@@ -1,4 +1,6 @@
-
+'''
+Generate consensus peaks.
+'''
 import numpy as np
 import pandas as pd
 from scipy.signal import argrelextrema, oaconvolve

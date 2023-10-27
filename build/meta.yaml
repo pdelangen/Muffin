@@ -1,0 +1,52 @@
+package:
+  name: muffin
+  version: 0.1.0
+
+source:
+  path: ../muffin/
+
+channels:
+  - conda-forge
+  - bioconda
+  - r
+
+requirements:
+  build:
+    - python
+    - numpy
+    - pip
+    - setuptools
+  host:
+    - python
+    - numpy
+    - pip
+    - setuptools
+  run:
+    - pyranges 
+    - numba  
+    - seaborn  
+    - fastcluster  
+    - scikit-learn  
+    - matplotlib  
+    - numpy  
+    - pandas  
+    - joblib  
+    - statsmodels 
+    - umap-learn  
+    - scipy  
+    - kneed  
+    - r-base  
+    - r-essentials  
+    - bioconductor-scran  
+    - bioconductor-deseq2  
+    - bioconductor-rsubread  
+    - bioconductor-apeglm
+    - rpy2 
+    - pyBigWig  
+    - leidenalg  
+    - igraph  
+    - plotly  
+    - python-kaleido  
+    - scikit-image  
+
+

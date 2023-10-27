@@ -12,7 +12,6 @@ from joblib import Parallel, delayed
 from joblib.externals.loky import get_reusable_executor
 from statsmodels.stats.multitest import fdrcorrection
 from scipy.sparse import csr_array
-import muffin
 
 
 from .utils import cluster, overlap_utils, utils, stats
@@ -61,16 +60,13 @@ class regLogicGREAT:
 
 
 class pyGREAT:
-    def __init__(self, gmtFile, geneFile, chrFile, 
-                 distal=1000000, upstream=5000, downstream=1000, 
-                 gtfGeneCol = "gene_name", gene_biotype="all"):
-        """
+    """
         Genomic regions GSEA tool
 
         Parameters
         ----------
         gmtFile : str or list of str
-            Path to gmt file or list of paths to gmt files that will get 
+            Path to gmt file or list of paths to gmt files that will get
             concatenated.
         geneFile : str
             Path to a GTF file.
@@ -83,14 +79,17 @@ class pyGREAT:
         downstream : int, optional
             Size of inferred downstream regulatory regions, by default 1000
         gtfGeneCol : str, optional
-            Name of the gene name/id column in the GTF file, by default "gene_name"
+            Name of the gene name/id column in the GTF file, by default
+            "gene_name"
         gene_biotype : str, optional
             Type of gene to keep e.g. "protein_coding", by default "all"
-        """
+    """
+    def __init__(self, gmtFile, geneFile, chrFile, 
+                 distal=1000000, upstream=5000, downstream=1000, 
+                 gtfGeneCol = "gene_name", gene_biotype="all"):
         self.chrInfo = pd.read_csv(chrFile, sep="\t", index_col=0, header=None)
         self.gtfGeneCol = gtfGeneCol
-        # Parse GMT file
-        # Setup gene-GO matrix
+        # Parse GMT file Setup gene-GO matrix
         if type(gmtFile) is str:
             gmtFile = [gmtFile]
         self.all_associations = list()
@@ -123,7 +122,8 @@ class pyGREAT:
         self.geneRegulatory = self.geneRegulatory[~self.geneRegulatory.index.duplicated(False)]
         self.validGenes = self.geneRegulatory["gene_name"]
         self.geneRegulatory = self.geneRegulatory.loc[self.validGenes]
-        # Transform gene set - gene associations to a sparse binary matrix (for clustering and glm)
+        # Transform gene set - gene associations to a sparse binary matrix (for
+        # clustering and glm)
         goFa, gos = pd.factorize(np.array(self.all_associations)[:,0])
         geneFa, genes = pd.factorize(np.array(self.all_associations)[:,1])
         non_annotated_genes = np.setdiff1d(self.validGenes.values, genes)
@@ -136,8 +136,8 @@ class pyGREAT:
 
     def get_nearest_gene(self, query, max_dist=np.inf):
         """
-        Get the nearest gene for each row. 
-        If it can't be retrieved will be named "None" (str).
+        Get the nearest gene for each row. If it can't be retrieved will be
+        named "None" (str).
 
         Parameters
         ----------
@@ -170,8 +170,8 @@ class pyGREAT:
     
     def label_by_nearest_gene(self, query):
         """
-        Label each row by its nearest gene, avoiding duplicates.
-        E.g. NADK_1, MYC_1, MYC_2, None_1, None_2
+        Label each row by its nearest gene, avoiding duplicates. E.g. NADK_1,
+        MYC_1, MYC_2, None_1, None_2
 
         Parameters
         ----------
@@ -201,9 +201,11 @@ class pyGREAT:
         ----------
         query: pandas dataframe in bed-like format or PyRanges
             Set of genomic regions to compute enrichment on.
-        background: None, pandas dataframe in bed-like format, or PyRanges (default: None)
-            If set to None considers the whole genome as the possible locations of the query.
-            Otherwise it supposes the query is a subset of these background regions.
+        background: None, pandas dataframe in bed-like format, or PyRanges
+        (default: None)
+            If set to None considers the whole genome as the possible locations
+            of the query. Otherwise it supposes the query is a subset of these
+            background regions.
         
         Returns
         -------
@@ -271,42 +273,41 @@ class pyGREAT:
 
 
 
-    def find_enriched(self, query, background=None, expected_mappability=0.85, minGenes=3, maxGenes=1000, cores=-1):
+    def find_enriched(self, query, background=None, minGenes=3, maxGenes=1000, cores=-1):
         """
         Find enriched terms in genes near query.
 
         Parameters
         ----------
         query: pandas dataframe in bed-like format or PyRanges
-            Set of genomic regions to compute enrichment on. If a pandas dataframe,
-            assume the first three columns are chromosome, start, end.
-        background: None, pandas dataframe in bed-like format, or PyRanges (default: None)
-            If set to None considers the whole genome as the possible, equiprobable
-            locations of the query.
-            Otherwise it supposes the query is a subset of these background regions. 
-            (Note that it does not explicitly check for it).
-        expected_mappability: float
-            Effective only when background is set to None.
-            Multiplier for the total genome size to correct non-mappable regions.
+            Set of genomic regions to compute enrichment on. If a pandas
+            dataframe, assume the first three columns are chromosome, start,
+            end.
+        background: None, pandas dataframe in bed-like format, or PyRanges
+        (default: None)
+            If set to None considers the whole genome as the possible,
+            equiprobable locations of the query. Otherwise it supposes the query
+            is a subset of these background regions. (Note that it does not
+            explicitly check for it).
         minGenes: int, (default 3)
             Minimum number of intersected genes for a GO annotation.
         maxGenes: int, (default 1000)
             Maximum number of genes for a GO annotation.
         cores: int, (default -1)
-            Max number of cores to used for parallelized computations. Default uses all
-            available cores (-1).
+            Max number of cores to used for parallelized computations. Default
+            uses all available cores (-1).
         
         Returns
         -------
         results: pandas dataframe
         """
-        # First compute intersections count for each gene
-        # And expected intersection count for each gene
+        # First compute intersections count for each gene And expected
+        # intersection count for each gene
         regPR = pr.PyRanges(self.geneRegulatory.rename({self.gtfGeneCol:"Name"}, axis=1))
         if background is not None:
             intersectBg = overlap_utils.countOverlapPerCategory(regPR, overlap_utils.dfToPrWorkaround(background, useSummit=False))
         else:
-            genomeSize = np.sum(self.chrInfo).values[0]*expected_mappability
+            genomeSize = np.sum(self.chrInfo).values[0]
             intersectBg = (self.geneRegulatory["End"]-self.geneRegulatory["Start"])/genomeSize
             intersectBg = np.maximum(intersectBg, 1/genomeSize)
             intersectBg.index = self.geneRegulatory["gene_name"]
@@ -333,10 +334,12 @@ class pyGREAT:
         maxBatch = len(obsMatrix.loc[trimmed])
         maxBatch = min(int(0.25*maxBatch/cores)+1,256)
         hitsPerGO = np.sum(csr_array(obsMatrix.sparse.to_coo()) * observed.values.ravel(), axis=1)[trimmed.values]
-        # Fit a Negative Binomial GLM for each annotation, and evaluate wald test p-value for each gene annotation
+        # Fit a Negative Binomial GLM for each annotation, and evaluate wald
+        # test p-value for each gene annotation
         with Parallel(n_jobs=cores, batch_size=maxBatch, verbose=1, max_nbytes=None, mmap_mode=None) as pool:
             results = pool(delayed(stats.fitNBinomModel)(hasAnnot, endog, expected, gos, queryCounts.index) for gos, hasAnnot in obsMatrix[trimmed].iterrows())
-        # Manually kill workers afterwards or they'll just stack up with multiple runs
+        # Manually kill workers afterwards or they'll just stack up with
+        # multiple runs
         get_reusable_executor().shutdown(wait=False, kill_workers=True)
         # Format results
         results = pd.DataFrame(results)
@@ -370,7 +373,7 @@ class pyGREAT:
         savePath: string (optional)
             If set to None, does not save the figure.
         """
-        fig, ax = plt.subplots(figsize=(2,2),dpi=muffin.params["figure_dpi"])
+
         newDF = enrichDF.copy()
         newDF.index = [self.goMap[i] for i in newDF.index]
         selected = (newDF["BH corrected p-value"] < alpha)
@@ -387,16 +390,14 @@ class pyGREAT:
         ax.spines['top'].set_visible(False)
         ax.set_xlabel("-log10(Corrected P-value)", fontsize=8)
         ax.set_title(title, fontsize=10)
-        if muffin.params["autosave_plots"] is not None:
-            fig.savefig(muffin.params["autosave_plots"] + "/barplot_enrich" + muffin.params["autosave_format"], bbox_inches="tight")
+
         return fig, ax
 
     def cluster_treemap(self, enrichDF, alpha=0.05, score="-log10(qval)", 
-                       metric="yule", resolution=1.0, output=None):
+                       metric="yule", resolution=1.0, output=None, topK=9):
         """
-        Plot a treemap of clustered gene set terms.
-        Clustering is done according to similarities between annotated genes
-        of a gene set.
+        Plot a treemap of clustered gene set terms. Clustering is done according
+        to similarities between annotated genes of a gene set.
 
         Parameters
         ----------
@@ -405,14 +406,22 @@ class pyGREAT:
         alpha : float, optional
             FDR cutoff, by default 0.05
         score : str, optional
-            Which column of the result dataframe to use to identify lead
-            term, by default "-log10(qval)"
+            Which column of the result dataframe to use to identify lead term,
+            by default "-log10(qval)"
         metric : str, optional
-            Similarity measure between GO terms, by default "yule"
+            Similarity measure of gene annotation between terms, by default
+            "yule"
         resolution : float, optional
-            Influences the size of the clusters (larger = more clusters), by default 1.0
+            Influences the size of the clusters (larger = more clusters), by
+            default 1.0
         output : str or None, optional
             Path to save figure, by default None
+        topK : int or None, optional
+            Number of terms to display, if set to None displays all, by default
+            9
+        Returns
+        -------
+        filtered: pandas dataframe
         """
         sig = enrichDF[enrichDF["BH corrected p-value"] < alpha]
         if len(enrichDF) == 0:
@@ -424,23 +433,25 @@ class pyGREAT:
                                            metric, k=int(np.sqrt(len(sig))), r=resolution, snn=True, 
                                            approx=True, restarts=10)
         sig.loc[:,"Cluster"] = clusters
-        sig.loc[:,"Name"] = [utils.customwrap(self.goMap[i]) for i in sig.index]
+        sig.loc[:,"Name"] = [utils.customwrap(self.goMap[i], 15) for i in sig.index]
         representatives = pd.Series(dict([(i, sig["Name"][sig[score][sig["Cluster"] == i].idxmax()]) for i in np.unique(sig["Cluster"])]))
         sig.loc[:,"Representative"] = representatives[sig["Cluster"]].values
         duplicate = sig["Representative"] == sig["Name"]
         sig.loc[:, "Representative"][duplicate] = ""
-        fig = px.treemap(names=sig["Name"], parents=sig["Representative"], 
-                        values=sig[score],
+        if topK is not None:
+            filtered = []
+            for r in representatives.unique():
+                filtered.append(sig[(sig["Representative"]==r)|(sig["Name"]==r)].sort_values(score, ascending=False).iloc[:topK])
+            filtered = pd.concat(filtered)
+        else:
+            filtered = sig
+        fig = px.treemap(names=filtered["Name"], parents=filtered["Representative"], values=filtered[score],
                         width=800, height=800)
         fig.update_layout(margin = dict(t=2, l=2, r=2, b=2),
                         font_size=30)
         fig.show()
-        if output is not None:
-            fig.write_image(output)
-            fig.write_html(output + ".html")
-        if muffin.params["autosave_plots"] is not None:
-            fig.write_image(muffin.params["autosave_plots"] + "/cluster_treemap" + muffin.params["autosave_format"])
-            fig.write_html(muffin.params["autosave_plots"] + "/cluster_treemap" + muffin.params["autosave_format"] + ".html")
+        return filtered
+
 
 
 

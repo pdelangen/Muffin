@@ -58,15 +58,17 @@ def computeVar(counts, sf):
 @nb.njit()
 def computeMeanNormFactors(counts, nf):
     means = np.zeros(counts.shape[1], dtype="float32")
+    s = np.mean(nf)
     for i in range(counts.shape[1]):
-        means[i] = np.mean(counts[:, i] / (nf[:, i] / np.sum(nf[:, i])))
+        means[i] = np.mean(counts[:, i] / (nf[:, i] / s))
     return means
 
 @nb.njit()
 def computeVarNormFactors(counts, nf):
     vars = np.zeros(counts.shape[1], dtype="float32")
+    s = np.mean(nf)
     for i in range(counts.shape[1]):
-        vars[i] = np.var(counts[:, i] / (nf[:, i] / np.sum(nf[:, i])))
+        vars[i] = np.var(counts[:, i] / (nf[:, i] / s))
     return vars
 
 def computeDropped(counts, means, min_exp, min_counts, min_mean):

@@ -1,5 +1,5 @@
 """
-Functions to generate plots peaks.
+Functions to generate plots.
 """
 import matplotlib.pyplot as plt
 import numpy as np

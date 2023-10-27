@@ -154,12 +154,14 @@ def dataset_from_bam(bam_paths, genomic_regions=None, genomic_regions_path=None,
         if col_names is None:
             col_names = np.arange(len(bedFile))
         bedFile.loc[:, "GeneID"] = col_names
-        bedFile = pd.concat([bedFile, randomRegions])
+        if input_bam_paths is not None:
+            bedFile = pd.concat([bedFile, randomRegions])
         bedFile.to_csv(muffin.params["temp_dir"] + "/ann.saf", sep="\t", index=None)
         genomic_regions_path = muffin.params["temp_dir"] + "/ann.saf"
     else:
-        genomic_regions.to_csv(muffin.params["temp_dir"] + "/ann.saf", sep="\t", index=None)
-        genomic_regions_path = muffin.params["temp_dir"] + "/ann.saf"
+        if genomic_regions is not None:
+            genomic_regions.to_csv(muffin.params["temp_dir"] + "/ann.saf", sep="\t", index=None)
+            genomic_regions_path = muffin.params["temp_dir"] + "/ann.saf"
     paramsDict = {"files":ro.vectors.StrVector(bam_paths)}
     # Count reads over genomic regions
     paramsDict["annot.ext"] = genomic_regions_path
@@ -220,7 +222,10 @@ def dataset_from_bam(bam_paths, genomic_regions=None, genomic_regions_path=None,
         dataset.var_names = np.arange(dataset.X.shape[1]).astype(str)
     else:
         dataset.var_names = col_names.astype(str)
-    dataset.var[["Chromosome", "Start", "End", "Strand"]] = bedFile.values[:-n_random_input, 1:]
+    if input_bam_paths is not None:
+        dataset.var[["Chromosome", "Start", "End", "Strand"]] = bedFile.values[:-n_random_input, 1:]
+    else:
+        dataset.var[["Chromosome", "Start", "End", "Strand"]] = bedFile.values[:, 1:]
     dataset.var[["Start", "End"]] = dataset.var[["Start", "End"]].astype("int")
     dataset.var["Chromosome"] = dataset.var["Chromosome"].astype("category")
     return dataset
