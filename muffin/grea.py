@@ -14,7 +14,7 @@ from statsmodels.stats.multitest import fdrcorrection
 from scipy.sparse import csr_array
 
 
-from .utils import cluster, overlap_utils, utils, stats
+from .utils import cluster, common, overlap_utils, stats
 
 maxCores = len(os.sched_getaffinity(0))
 
@@ -379,7 +379,7 @@ class pyGREAT:
         selected = (newDF["BH corrected p-value"] < alpha)
         ordered = -np.log10(newDF[by][selected]).sort_values(ascending=True)[:topK]
         terms = ordered.index
-        t = [utils.capTxtLen(term, 50) for term in terms]
+        t = [common.capTxtLen(term, 50) for term in terms]
         ax.tick_params(axis="x", labelsize=8)
         ax.tick_params(length=3, width=1.2)
         ax.barh(range(len(terms)), np.minimum(ordered[::-1],324.0))
@@ -433,7 +433,7 @@ class pyGREAT:
                                            metric, k=int(np.sqrt(len(sig))), r=resolution, snn=True, 
                                            approx=True, restarts=10)
         sig.loc[:,"Cluster"] = clusters
-        sig.loc[:,"Name"] = [utils.customwrap(self.goMap[i], 15) for i in sig.index]
+        sig.loc[:,"Name"] = [common.customwrap(self.goMap[i], 15) for i in sig.index]
         representatives = pd.Series(dict([(i, sig["Name"][sig[score][sig["Cluster"] == i].idxmax()]) for i in np.unique(sig["Cluster"])]))
         sig.loc[:,"Representative"] = representatives[sig["Cluster"]].values
         duplicate = sig["Representative"] == sig["Name"]

@@ -1,11 +1,6 @@
 temp87845_pkg
-superPackage/__pycache__
 trash
-superPackage/utils/__pycache__
-data/moignard15
-tempaaaa
 settings/__pycache__
-data/
 h3k4me3_plots
 muffin/utils/__pycache__
 H3K4Me3_chip_immune.html
@@ -14,9 +9,6 @@ muffin/__pycache__
 atac_tcga_results
 h3k4me3_results
 tmp_muffin
-_build
-docs
 build_
 .vscode
 h3k4me3_results_noniput
-dist

@@ -5,7 +5,7 @@ import anndata as ad
 import numpy as np
 import pandas as pd
 import pyranges as pr
-from .utils import utils
+from .utils import common
 import warnings
 import muffin
 
@@ -124,7 +124,7 @@ def dataset_from_bam(bam_paths, genomic_regions=None, genomic_regions_path=None,
     from rpy2.robjects.conversion import localconverter
     from rpy2.robjects.packages import importr
     subread = importr("Rsubread")
-    utils.createDir(muffin.params["temp_dir"])
+    common.createDir(muffin.params["temp_dir"])
     # Append random regions to bed
     if input_bam_paths is not None:
         if chromsizes is None:

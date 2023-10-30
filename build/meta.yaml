@@ -3,22 +3,19 @@ package:
   version: 0.1.0
 
 source:
-  path: ../muffin/
+  path: ../
 
-channels:
-  - conda-forge
-  - bioconda
-  - r
+build:
+  noarch: python
+  number: 0
 
 requirements:
   build:
     - python
-    - numpy
     - pip
     - setuptools
   host:
     - python
-    - numpy
     - pip
     - setuptools
   run:
@@ -29,7 +26,7 @@ requirements:
     - scikit-learn  
     - matplotlib  
     - numpy  
-    - pandas  
+    - pandas!=2.1.2
     - joblib  
     - statsmodels 
     - umap-learn  
@@ -42,11 +39,18 @@ requirements:
     - bioconductor-rsubread  
     - bioconductor-apeglm
     - rpy2 
-    - pyBigWig  
+    - umap-learn
     - leidenalg  
     - igraph  
+    - pybigwig
     - plotly  
     - python-kaleido  
     - scikit-image  
+    - scanpy>=1.9.5
+    - anndata
 
-
+about:
+  license: GPL
+  license_file: LICENSE
+  summary: A suite of tools for the analysis of arbitrary count-based sequencing data.
+  description: conda install -c pdelangen13 -c bioconda -c conda-forge muffin
