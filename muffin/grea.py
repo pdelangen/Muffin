@@ -273,7 +273,7 @@ class pyGREAT:
 
 
 
-    def find_enriched(self, query, background=None, minGenes=3, maxGenes=1000, cores=-1):
+    def find_enriched(self, query, background=None, min_genes=3, max_genes=1000, cores=-1):
         """
         Find enriched terms in genes near query.
 
@@ -289,10 +289,10 @@ class pyGREAT:
             equiprobable locations of the query. Otherwise it supposes the query
             is a subset of these background regions. (Note that it does not
             explicitly check for it).
-        minGenes: int, (default 3)
-            Minimum number of intersected genes for a GO annotation.
-        maxGenes: int, (default 1000)
-            Maximum number of genes for a GO annotation.
+        min_genes: int, (default 3)
+            Minimum number of intersected genes for a geneset.
+        max_genes: int, (default 1000)
+            Maximum number of genes for a geneset.
         cores: int, (default -1)
             Max number of cores to used for parallelized computations. Default
             uses all available cores (-1).
@@ -315,7 +315,7 @@ class pyGREAT:
         intersectQuery = overlap_utils.countOverlapPerCategory(regPR, overlap_utils.dfToPrWorkaround(query, useSummit=False))
         queryCounts = intersectBg.copy() * 0
         queryCounts.loc[intersectQuery.index] = intersectQuery
-        obsMatrix = self.mat[queryCounts.index]
+        obsMatrix = self.mat.loc[:, queryCounts.index]
         if background is not None:
             expected = intersectBg.loc[obsMatrix.columns]
             observed = pd.DataFrame(queryCounts.loc[queryCounts.index])
@@ -325,15 +325,15 @@ class pyGREAT:
             expected = intersectBg.loc[obsMatrix.columns]*len(query)
             observed = pd.DataFrame(queryCounts.loc[queryCounts.index])
             endog = observed.copy()
-        # Trim GOs under cutoff
-        trimmed = obsMatrix[intersectQuery.index].sum(axis=1) >= minGenes
-        trimmed = trimmed & (obsMatrix.sum(axis=1) <= maxGenes)
+        # Trim GOs under cutoffs
+        trimmed = obsMatrix.loc[:, intersectQuery.index].values.sum(axis=1) >= min_genes
+        trimmed = trimmed & (obsMatrix.values.sum(axis=1) <= max_genes)
         # Setup parallel computation settings
         if cores == -1:
             cores = maxCores      
         maxBatch = len(obsMatrix.loc[trimmed])
         maxBatch = min(int(0.25*maxBatch/cores)+1,256)
-        hitsPerGO = np.sum(csr_array(obsMatrix.sparse.to_coo()) * observed.values.ravel(), axis=1)[trimmed.values]
+        hitsPerGO = np.sum(csr_array(obsMatrix.sparse.to_coo()) * observed.values.ravel(), axis=1)[trimmed]
         # Fit a Negative Binomial GLM for each annotation, and evaluate wald
         # test p-value for each gene annotation
         with Parallel(n_jobs=cores, batch_size=maxBatch, verbose=1, max_nbytes=None, mmap_mode=None) as pool:
@@ -373,7 +373,7 @@ class pyGREAT:
         savePath: string (optional)
             If set to None, does not save the figure.
         """
-
+        fig, ax = plt.figure()
         newDF = enrichDF.copy()
         newDF.index = [self.goMap[i] for i in newDF.index]
         selected = (newDF["BH corrected p-value"] < alpha)
