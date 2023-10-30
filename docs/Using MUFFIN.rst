@@ -5,7 +5,7 @@ Get MUFFIN via conda :
 
 .. code-block:: bash
 
-   conda install -c bioconda muffin
+   conda install -c pdelangen13 -c conda-forge -c bioconda muffin
 
 
 Loading your data
