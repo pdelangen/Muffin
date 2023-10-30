@@ -7,7 +7,7 @@ conda install -c pdelangen13 -c bioconda -c conda-forge muffin
 
 ## Documentation
 Guidelines, examples and API reference are available on ReadTheDoc.
-
+ 
 ## Cite
 If you use Muffin in your work, please cite :
 
