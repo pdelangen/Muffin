@@ -3,7 +3,7 @@ package:
   version: 0.1.0
 
 source:
-  path: ../
+  git_url: https://github.com/pdelangen/Muffin.git
 
 build:
   noarch: python
@@ -54,5 +54,5 @@ about:
   license_file: LICENSE
   summary: A suite of tools for the analysis of arbitrary count-based sequencing data.
   description: conda install -c pdelangen13 -c bioconda -c conda-forge muffin
-  dev_url: http://muffin.readthedocs.io/
-  doc_url: https://github.com/pdelangen/Muffin
+  dev_url: https://github.com/pdelangen/Muffin
+  doc_url: http://muffin.readthedocs.io/
