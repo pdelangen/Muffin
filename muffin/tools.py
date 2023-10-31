@@ -38,7 +38,6 @@ def rescale_input_quantile(dataset, plot=False):
     ipStrength = np.zeros(len(dataset))
        # Find reference point for fold change over input
     for i in range(len(dataset.X)):
-        print(dataset.obs_names[i])
         order1 = np.argsort(dataset.uns["input_random"][i])[::-1]
         order = np.argsort(dataset.uns["counts_random"][i][order1], kind="stable")
         sortedCounts = dataset.uns["counts_random"][i][order1][order]
