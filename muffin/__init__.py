@@ -5,6 +5,6 @@ params = {"autosave_plots":None,
 
 from . import load
 from .peakMerge import merge_peaks
-from . import grea
+from . import great
 from . import plots
 from . import tools
