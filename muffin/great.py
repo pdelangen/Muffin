@@ -19,6 +19,9 @@ from .utils import cluster, common, overlap_utils, stats
 maxCores = len(os.sched_getaffinity(0))
 
 class regLogicGREAT:
+    """
+    :meta private:
+    """
     def __init__(self, upstream, downstream, distal):
         self.upstream = upstream
         self.downstream = downstream

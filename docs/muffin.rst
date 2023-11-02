@@ -14,10 +14,10 @@ muffin.tools
    :undoc-members:
    :show-inheritance:
 
-muffin.grea
+muffin.great
 ------------------
 
-.. automodule:: muffin.grea
+.. automodule:: muffin.great
    :members:
    :undoc-members:
    :show-inheritance:
