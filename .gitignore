@@ -10,4 +10,7 @@ atac_tcga_results
 h3k4me3_results
 tmp_muffin
 build_
+build
 .vscode
+dist
+muffin.egg-info
