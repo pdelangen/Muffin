@@ -21,8 +21,8 @@ def createDir(path):
         print(f"Directory {path} already exists !")
 
 
-def customwrap(s,width=20):
-    return "<br>".join(textwrap.wrap(s,width=width)).capitalize()
+def customwrap(s,width=20,max_lines=5):
+    return "<br>".join(textwrap.wrap(s,width=width, max_lines=max_lines)).capitalize()
 
 def capTxtLen(txt, maxlen):
     try:

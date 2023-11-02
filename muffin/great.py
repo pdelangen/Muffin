@@ -361,7 +361,7 @@ class pyGREAT:
         results.sort_values(by="P(Beta > 0)", inplace=True)
         return results
 
-    def plot_enrichs(self, enrichDF, title="", by="P(Beta > 0)", alpha=0.05, topK=10, savePath=None):
+    def barplot_enrich(self, enrichDF, title="", by="P(Beta > 0)", alpha=0.05, topK=10, savePath=None):
         """
         Draw Enrichment barplots
 
@@ -373,9 +373,9 @@ class pyGREAT:
         savePath: string (optional)
             If set to None, does not save the figure.
         """
-        fig, ax = plt.figure()
+        fig, ax = plt.subplots()
         newDF = enrichDF.copy()
-        newDF.index = [self.goMap[i] for i in newDF.index]
+        newDF.index = [self.goMap[i].capitalize() for i in newDF.index]
         selected = (newDF["BH corrected p-value"] < alpha)
         ordered = -np.log10(newDF[by][selected]).sort_values(ascending=True)[:topK]
         terms = ordered.index
@@ -390,7 +390,7 @@ class pyGREAT:
         ax.spines['top'].set_visible(False)
         ax.set_xlabel("-log10(Corrected P-value)", fontsize=8)
         ax.set_title(title, fontsize=10)
-
+        ax.grid(False)
         return fig, ax
 
     def cluster_treemap(self, enrichDF, alpha=0.05, score="-log10(qval)", 
@@ -433,10 +433,14 @@ class pyGREAT:
                                            metric, k=int(np.sqrt(len(sig))), r=resolution, snn=True, 
                                            approx=True, restarts=10)
         sig.loc[:,"Cluster"] = clusters
-        sig.loc[:,"Name"] = [common.customwrap(self.goMap[i], 15) for i in sig.index]
         representatives = pd.Series(dict([(i, sig["Name"][sig[score][sig["Cluster"] == i].idxmax()]) for i in np.unique(sig["Cluster"])]))
+        representatives = pd.Series([common.customwrap(r, 30) for r in representatives.values])
         sig.loc[:,"Representative"] = representatives[sig["Cluster"]].values
+        long_wrap = [common.customwrap(self.goMap[i], 30) for i in sig.index]
+        short_wrap = [common.customwrap(self.goMap[i], 15, 5) for i in sig.index]
+        sig.loc[:, "Name"] = long_wrap
         duplicate = sig["Representative"] == sig["Name"]
+        sig.loc[:, "Name"] = np.where(duplicate, sig.loc[:, "Name"].values, short_wrap)
         sig.loc[:, "Representative"][duplicate] = ""
         if topK is not None:
             filtered = []
@@ -445,12 +449,14 @@ class pyGREAT:
             filtered = pd.concat(filtered)
         else:
             filtered = sig
-        fig = px.treemap(names=filtered["Name"], parents=filtered["Representative"], values=filtered[score],
+        fig = px.treemap(names=filtered["Name"], parents=filtered["Representative"], values=np.sqrt(np.sqrt(filtered[score])),
                         width=800, height=800)
         fig.update_layout(margin = dict(t=2, l=2, r=2, b=2),
-                        font_size=30)
+                        font_size=20, font_family="Arial Black")
+        fig.write_image(output)
+        fig.write_html(output+".html")
         fig.show()
-        return filtered
+        return sig[duplicate]
 
 
 

@@ -6,6 +6,11 @@ import numba as nb
 import warnings
 import pandas as pd
 
+@nb.njit()
+def add_segments(array, segments):
+    for start, end in segments:
+        array[start:end] += 1
+    return array
 
 def median_absolute_deviation(data):
     """

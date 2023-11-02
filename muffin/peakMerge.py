@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 from scipy.signal import argrelextrema, oaconvolve
 from scipy.signal.windows import gaussian
+from .utils import stats
 
 def merge_peaks(beds, chrom_sizes, fileFormat="narrowPeak", inferCenter=False, forceUnstranded=False, 
                   sigma="auto", perPeakDensity=False, perPeakMultiplier=0.5,
