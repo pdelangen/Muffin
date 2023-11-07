@@ -56,3 +56,7 @@ about:
   description: conda install -c pdelangen13 -c bioconda -c conda-forge muffin
   dev_url: https://github.com/pdelangen/Muffin
   doc_url: http://muffin.readthedocs.io/
+
+test:
+  imports:
+    - muffin

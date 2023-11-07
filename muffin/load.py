@@ -62,7 +62,7 @@ def dataset_from_arrays(count_table, row_names=None, col_names=None, input_count
     else:
         dataset.obs_names = row_names.astype(str)
     if col_names is None:
-        dataset.var_names = np.arange(len(count_table)).astype(str)
+        dataset.var_names = np.arange(count_table.shape[1]).astype(str)
     else:
         dataset.var_names = col_names.astype(str)
     if input_count_table is not None:

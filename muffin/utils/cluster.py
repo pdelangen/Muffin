@@ -52,7 +52,7 @@ def graphClustering(matrix, metric, k="auto", r=1.0, snn=True,
     """
     # Create NN graph
     if k == "auto":
-        k = int(np.power(matrix.shape[0], 0.2)*5)
+        k = int(np.power(matrix.shape[0], 0.2)*4)
         print(k)
     if approx:
         # Add a few extra NNs to compute in order to get more accurate ANNs

@@ -241,7 +241,7 @@ def rescale_input_center_scale(dataset, plot=True):
 
     
 
-def trim_low_counts(dataset, min_exp=3, min_counts=1, min_mean=0.0):
+def trim_low_counts(dataset, min_exp=3, min_counts=1):
     """
     Returns a boolean array of variables with at least 
     min_counts in min_exp rows, and with mean normalized 
@@ -255,8 +255,6 @@ def trim_low_counts(dataset, min_exp=3, min_counts=1, min_mean=0.0):
         Minimum number of experiment to have at least min_counts, by default 3, at least 1
     min_counts : int, optional
         Minimum number of counts, by default 1
-    min_mean : float, optional
-        Mean normalized count threshold, by default 0.0
 
     Returns
     -------
@@ -265,9 +263,7 @@ def trim_low_counts(dataset, min_exp=3, min_counts=1, min_mean=0.0):
     """
     if min_exp < 1 or min_counts < 1:
         raise ValueError(f"min_exp and min_counts have to be 1 or greater.")
-    dataset.var["means"] = stats.computeMeans(dataset.X, dataset.obs["size_factors"].values)
-    dropped_features = stats.computeDropped(dataset.X, dataset.var["means"].values, 
-                                                   min_exp, min_counts, min_mean)
+    dropped_features = stats.computeDropped(dataset.X, min_exp, min_counts)
     return ~dropped_features
     
 def remove_low_peaks(dataset, minExp=3):
@@ -468,15 +464,19 @@ def compute_residuals(dataset, residuals="anscombe", clip=np.inf, subSampleEst=2
     Parameters
     ----------
     residuals : str, optional
-        Whether to compute "deviance" residuals or "pearson" residuals,
-        by default "deviance"
+        Whether to compute "anscombe", "deviance" or "pearson" residuals, by
+        default "anscombe"
+    clip : float, optional
+        Value to clip residuals to (+-value), you can also provide "auto" to
+        clip at +-sqrt(9+len(dataset)/4), default np.inf
+    subSampleEst : int, optional
+        Number of samples to use to estimate mean-overdispersion relationship.
     maxThreads : int, optional
         Number of threads to use, by default -1 (all)
     verbose : bool, optional
         Verbosity, by default True
     plot : bool, optional
-        Whether to plot feature importance or not on the mean-variance graph,
-        by default True
+        Whether to plot the mean-variance graph, by default True
 
     Returns
     -------
@@ -543,7 +543,7 @@ def compute_residuals(dataset, residuals="anscombe", clip=np.inf, subSampleEst=2
     # Kill workers or they keep being active even if the program is shut down
     get_reusable_executor().shutdown(wait=False, kill_workers=True)
     if clip == "auto":
-        clip = np.sqrt(9+len(dataset)/4)
+        clip = np.sqrt(9+len(dataset)/9)
     dataset.layers["residuals"] = np.clip(np.array(residuals, copy=False).T, -clip, clip)
     if plot:
         # Plot mean/variance relationship and selected probes
@@ -568,7 +568,7 @@ def compute_residuals(dataset, residuals="anscombe", clip=np.inf, subSampleEst=2
     return dataset
     
 def compute_pa_pca(dataset, layer="residuals", feature_mask=None, perm=3, alpha=0.01, 
-                    solver="randomized", whiten=True,
+                    solver="randomized", whiten=False,
                     max_rank=None, mincomp=2, plot=False):
     """
     Permutation Parallel Analysis to find the optimal number of PCA components.
@@ -647,19 +647,18 @@ def compute_umap(dataset, on="reduced_dims", which="X_pca", feature_mask=None, u
     Parameters
     ----------
     on : str, optional
-        On which data representation to perform clustering. Use
-        "reduced_dims" or "features", by default "reduced_dims".
+        On which data representation to perform clustering. Use "reduced_dims"
+        or "features", by default "reduced_dims".
     which : str, optional
-        Which reduced_dims or feature to use. I.e. "PCA" or "residuals", 
-        by default "PCA".
+        Which reduced_dims or feature to use. I.e. "PCA" or "residuals", by
+        default "PCA".
     feature_mask : boolean ndarray, optional
-        Subset of features to use for Umap (works with PCA as well), 
-        by default None
+        Subset of features to use for Umap (works with PCA as well), by default
+        None
     umap_params : dict, optional
-        Dictionnary of keyword arguments for UMAP, see UMAP documentation, 
-        by default if not provided metric is set to euclidean with 10 or less input dimensions,
-        and to correlation otherwise. Random state is also fixed and should not 
-        be provided.
+        Dictionnary of keyword arguments for UMAP, see UMAP documentation, by
+        default if not provided metric is set to euclidean. Random state is also
+        fixed and should not be provided.
 
     Returns
     -------
@@ -684,16 +683,13 @@ def compute_umap(dataset, on="reduced_dims", which="X_pca", feature_mask=None, u
     else:
         raise ValueError("Invalid 'on' parameter, use either 'reduced_dims' or 'features'")
     if not "metric" in umap_params.keys():
-        if data.shape[1] > 5:
-            umap_params["metric"] = "correlation"
-        else:
-            umap_params["metric"] = "euclidean"
+        umap_params["metric"] = "euclidean"
     umap_params["random_state"] = 42
     dataset.obsm["X_umap"] = umap.UMAP(**umap_params).fit_transform(data)
     return dataset
 
 def cluster_rows_leiden(dataset, on="reduced_dims", which="X_pca", feature_mask=None,
-                    metric="correlation", k="auto", r=1.0, restarts=10):  
+                    metric="euclidean", k="auto", r=1.0, restarts=10):  
     """
     Computes Shared Nearest Neighbor graph clustering.
 
@@ -709,7 +705,7 @@ def cluster_rows_leiden(dataset, on="reduced_dims", which="X_pca", feature_mask=
         Subset of features to use for Umap (works with PCA as well), 
         by default None
     metric : str, optional
-        Metric to use for kNN search, by default "correlation"
+        Metric to use for kNN search, by default "euclidean"
     k : "auto" or int, optional
         Number of nearest neighbors to find, 
         by default "auto" uses 5*nFeatures^0.2 as a rule of thumb.

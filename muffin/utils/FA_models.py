@@ -1,6 +1,7 @@
 import numpy as np
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
+from scipy.stats import norm
 
 def permutationPA_PCA(X, perm=3, alpha=0.01, solver="randomized", whiten=False,
                       max_rank=None, mincomp=0, returnModel=False, plot=True, figSaveDir=None):
@@ -66,8 +67,7 @@ def permutationPA_PCA(X, perm=3, alpha=0.01, solver="randomized", whiten=False,
     pvals = np.ones(len(dstat_obs))
     delta = np.zeros(len(dstat_obs))
     for i in range(len(dstat_obs)):
-        pvals[i] = np.mean(dstat_null[:, i] >= dstat_obs[i])
-        delta[i] = dstat_obs[i] /np.mean(dstat_null[:, i])
+        pvals[i] = norm(loc=np.mean(dstat_null[:, i]), scale=np.std(dstat_null[:, i])).sf(dstat_obs[i])
     for i in range(1, len(dstat_obs)):
         pvals[i] = 1.0-(1.0-pvals[i - 1])*(1.0-pvals[i])
      

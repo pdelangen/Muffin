@@ -172,10 +172,12 @@ In the case of multi-categories differential expression, we recommend using Scan
 
 Gene Set Enrichment Analysis of genomic regions
 ***********************************************
-If you are working with genomic regions instead of genes, we provide tools to link your genomic regions to genes and functional annotations.
-This particularly important for assays such as ATAC-seq or ChIP-seq. Our method supposes that your regions of interest are a subset of background regions
-(for example, all regions considered for DE testing and DE regions).
-We recommend you to check the ATAC-seq and ChIP-seq examples for more details.
+If you are working with genomic regions instead of genes, we provide tools to
+link your genomic regions to genes and functional annotations. This is
+particularly important for assays such as ATAC-seq or ChIP-seq. Our method
+supposes that your regions of interest are a subset of background regions (for
+example, all regions considered for DE testing and DE regions). We recommend you
+to check the ATAC-seq and ChIP-seq examples for more details.
 
 .. code-block:: python
 

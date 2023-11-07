@@ -2,6 +2,7 @@ import numpy as np
 from statsmodels.genmod.families.family import NegativeBinomial
 from statsmodels.genmod.generalized_linear_model import GLM
 from statsmodels.api import NegativeBinomial as nbfit
+from scipy.stats import nbinom, norm
 import numba as nb
 import warnings
 import pandas as pd
@@ -76,10 +77,10 @@ def computeVarNormFactors(counts, nf):
         vars[i] = np.var(counts[:, i] / (nf[:, i] / s))
     return vars
 
-def computeDropped(counts, means, min_exp, min_counts, min_mean):
+def computeDropped(counts, min_exp, min_counts):
     toDrop = np.zeros(counts.shape[1], dtype="bool")
     for i in range(len(toDrop)):
-        toDrop[i] = (means[i] <= min_mean) | ((counts[:, i] >= min_counts).sum() < min_exp)
+        toDrop[i] = (counts[:, i] >= min_counts).sum() < min_exp
     return toDrop
 
 def fit_alpha(exposure, counts, design):
@@ -110,6 +111,20 @@ def fit_alpha_input(counts, design, input_counts):
     warnings.filterwarnings("default")
     return model.params[-1]
 
+def nb_rqr(x, m, alpha):
+    # Randomized Quantile Residuals
+    n = 1/alpha
+    p = m / (m + alpha * (m**2))
+    q = nbinom(n,p).sf(x-1) - np.random.random(x.shape) * nbinom(n,p).pmf(x)
+    return np.clip(norm.isf(q), -38.2, 38.2)
+
+def nb_mqr(x, m, alpha):
+    # Middle point Quantile residuals
+    n = 1/alpha
+    p = m / (m + alpha * (m**2))
+    q = nbinom(n,p).sf(x-1) - 0.5 * nbinom(n,p).pmf(x)
+    return np.clip(norm.isf(q), -38.2, 38.2)
+
 def compute_residuals(alpha, exposure, counts, design, res_type):
     alpha = np.clip(alpha, 1e-5, 1e5)
     distrib = NegativeBinomial(alpha=alpha)
@@ -120,6 +135,10 @@ def compute_residuals(alpha, exposure, counts, design, res_type):
         residuals = distrib.resid_dev(counts, predicted)
     elif res_type == "anscombe":
         residuals = distrib.resid_anscombe(counts, predicted)
+    elif res_type == "quantile":
+        residuals = nb_mqr(counts, predicted, alpha)
+    elif res_type == "rqr":
+        residuals = nb_rqr(counts, predicted, alpha)
     else:
         residuals = (counts - predicted) / np.sqrt(predicted + alpha * predicted**2)
     return residuals.astype("float32") 
@@ -139,6 +158,10 @@ def compute_residuals_input(alpha, counts, design, res_type,
         residuals = distrib.resid_dev(counts, predicted)
     elif res_type == "anscombe":
         residuals = distrib.resid_anscombe(counts, predicted)
+    elif res_type == "quantile":
+        residuals = nb_mqr(counts, predicted, alpha)
+    elif res_type == "rqr":
+        residuals = nb_rqr(counts, predicted, alpha)
     else:
         residuals = (counts - predicted) / np.sqrt(predicted + alpha * predicted**2)
     return residuals.astype("float32") 

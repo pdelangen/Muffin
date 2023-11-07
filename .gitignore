@@ -14,3 +14,4 @@ build
 .vscode
 dist
 muffin.egg-info
+docs/examples/10k_pbmc_clustering-copy.ipynb
