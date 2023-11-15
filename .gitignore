@@ -15,3 +15,4 @@ build
 dist
 muffin.egg-info
 docs/examples/10k_pbmc_clustering-copy.ipynb
+10k_pbmcs_pol2

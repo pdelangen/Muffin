@@ -116,14 +116,18 @@ def nb_rqr(x, m, alpha):
     n = 1/alpha
     p = m / (m + alpha * (m**2))
     q = nbinom(n,p).sf(x-1) - np.random.random(x.shape) * nbinom(n,p).pmf(x)
-    return np.clip(norm.isf(q), -38.2, 38.2)
+    # Clip for numerical stability
+    q = np.clip(q, 1e-323, 1-6e-17)
+    return norm.isf(q)
 
 def nb_mqr(x, m, alpha):
     # Middle point Quantile residuals
     n = 1/alpha
     p = m / (m + alpha * (m**2))
     q = nbinom(n,p).sf(x-1) - 0.5 * nbinom(n,p).pmf(x)
-    return np.clip(norm.isf(q), -38.2, 38.2)
+    # Clip for numerical stability
+    q = np.clip(q, 1e-323, 1-6e-17)
+    return norm.isf(q)
 
 def compute_residuals(alpha, exposure, counts, design, res_type):
     alpha = np.clip(alpha, 1e-5, 1e5)

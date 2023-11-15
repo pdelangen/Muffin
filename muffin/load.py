@@ -56,7 +56,7 @@ def dataset_from_arrays(count_table, row_names=None, col_names=None, input_count
     dataset : AnnData
         Annotated data matrix
     """
-    dataset = ad.AnnData(count_table, dtype=count_table.dtype)
+    dataset = ad.AnnData(count_table)
     if row_names is None:
         dataset.obs_names = np.arange(len(count_table)).astype(str)
     else:
@@ -175,9 +175,9 @@ def dataset_from_bam(bam_paths, genomic_regions=None, genomic_regions_path=None,
         res = subread.featureCounts(**paramsDictRpy2)
         mapping_stats = pd.DataFrame(res["stat"]).set_index("Status")
         if input_bam_paths is None:
-            dataset = ad.AnnData(res["counts"].T.astype(np.int32), dtype=np.int32)
+            dataset = ad.AnnData(res["counts"].T.astype(np.int32))
         else:
-            dataset = ad.AnnData(res["counts"].T.astype(np.int32)[:, :-n_random_input], dtype=np.int32)
+            dataset = ad.AnnData(res["counts"].T.astype(np.int32)[:, :-n_random_input])
             dataset.uns["counts_random"] = res["counts"].T.astype(np.int32)[:, -n_random_input:]
         dataset.uns["tot_mapped_counts"] = mapping_stats.sum(axis=0).values
     # Same but for input files

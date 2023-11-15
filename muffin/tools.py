@@ -47,12 +47,6 @@ def rescale_input_quantile(dataset, plot=False):
         pj = sumCounts/np.sum(sortedCounts)
         qj = sumInput/np.sum(sortedInput)
         amax = np.argmax(qj-pj)
-        plt.figure()
-        plt.plot(pj)
-        plt.plot(qj)
-        plt.vlines(amax, ymin=0, ymax=0.5)
-        plt.show()
-        plt.close() 
         if sumInput[amax] <= 10 or sumCounts[amax] <= 10:
             # take full sum when the method does not work well
             # and takes the first few value
@@ -151,14 +145,6 @@ def rescale_input_center_scale(dataset, plot=True):
         pj = sumCounts/np.sum(sortedCounts)
         qj = sumInput/np.sum(sortedInput)
         amax = np.argmax(qj-pj)
-        """ 
-        print(dataset.obs_names[i])
-        plt.figure()
-        plt.plot(pj)
-        plt.plot(qj)
-        plt.vlines(amax, ymin=0, ymax=0.5)
-        plt.show()
-        plt.close()  """
         if sumInput[amax] <= 10 or sumCounts[amax] <= 10:
             # take full sum when the method does not work well
             # and takes the first few value
@@ -244,8 +230,7 @@ def rescale_input_center_scale(dataset, plot=True):
 def trim_low_counts(dataset, min_exp=3, min_counts=1):
     """
     Returns a boolean array of variables with at least 
-    min_counts in min_exp rows, and with mean normalized 
-    value above min_mean. 
+    min_counts in min_exp rows. 
 
     Parameters
     ----------
@@ -266,17 +251,6 @@ def trim_low_counts(dataset, min_exp=3, min_counts=1):
     dropped_features = stats.computeDropped(dataset.X, min_exp, min_counts)
     return ~dropped_features
     
-def remove_low_peaks(dataset, minExp=3):
-    """_summary_
-
-    Parameters
-    ----------
-    dataset : _type_
-        _description_
-    minExp : int, optional
-        _description_, by default 3
-    """    
-    pass
 
 def pseudo_peak_calling(dataset, alpha=0.05, minFC=0.5, minExp=2):
     """
@@ -318,8 +292,9 @@ def pseudo_peak_calling(dataset, alpha=0.05, minFC=0.5, minExp=2):
 
 def feature_selection_chisquare(dataset, alpha=0.05):
     """
-    Returns a boolean array of the features which do not passes the 
-    sum of squared residuals chisquared goodness of fit test.
+    Returns a boolean array of the features which do not passes the sum of
+    squared residuals chisquared goodness of fit test. It is usually too
+    stringent.
 
     Parameters
     ----------
@@ -457,14 +432,14 @@ def compute_size_factors(dataset, method="top_fpkm"):
     dataset.obs["size_factors"] = (values / np.mean(values)).astype("float32")
     return dataset
 
-def compute_residuals(dataset, residuals="anscombe", clip=np.inf, subSampleEst=2000, maxThreads=-1, verbose=True, plot=True):
+def compute_residuals(dataset, residuals="quantile", clip=np.inf, subSampleEst=2000, maxThreads=-1, verbose=True, plot=True):
     """
-    Compute residuals from the regularized NB model for each feature.
+    Compute residuals from a regularized NB model for each variable.
 
     Parameters
     ----------
     residuals : str, optional
-        Whether to compute "anscombe", "deviance" or "pearson" residuals, by
+        Whether to compute "anscombe", "deviance", "quantile", "rqr" or "pearson" residuals, by
         default "anscombe"
     clip : float, optional
         Value to clip residuals to (+-value), you can also provide "auto" to
@@ -498,7 +473,7 @@ def compute_residuals(dataset, residuals="anscombe", clip=np.inf, subSampleEst=2
     # Estimate regularized variance in function of mean expression
     nLowess = min(subSampleEst, dataset.X.shape[1])
     indices = np.linspace(0, dataset.X.shape[1]-1, nLowess, dtype=int)
-    meanOrder = np.argsort(dataset.var["means"])
+    meanOrder = np.argsort(dataset.var["means"].values)
     subset = meanOrder[indices]
     alphas = np.zeros(nLowess)
     if "input" in dataset.layers.keys():
@@ -517,12 +492,11 @@ def compute_residuals(dataset, residuals="anscombe", clip=np.inf, subSampleEst=2
     get_reusable_executor().shutdown(wait=False, kill_workers=True)
     alphas = np.array(alphas)
     validAlphas = (alphas > 1e-3) & (alphas < 1e5)
-    logAlpha = lowess(np.log(alphas[validAlphas]), indices[validAlphas], 
-                            xvals=indices, frac=0.1, return_sorted=False)
-    logAlpha = np.clip(logAlpha, 
-                        np.log(alphas[validAlphas]).min(),
-                        np.log(alphas[validAlphas]).max())
-    dataset.var["reg_alpha"] = np.exp(sc.interpolate.interp1d(indices, logAlpha)(np.argsort(meanOrder)))
+    # Take rolling median as a regularized estimate of overdispersion
+    regAlpha = np.array(pd.Series(alphas[validAlphas]).rolling(200, center=True, min_periods=1).median())
+    # Linearly interpolate between values
+    dataset.var["reg_alpha"] = sc.interpolate.interp1d(indices[validAlphas], regAlpha, 
+                                                       bounds_error=False, fill_value=(regAlpha[0],regAlpha[-1]))(np.argsort(meanOrder))
     # Dispatch accross multiple processes
     sf = dataset.obs["size_factors"].values
     design = dataset.obsm["design"]
@@ -543,7 +517,7 @@ def compute_residuals(dataset, residuals="anscombe", clip=np.inf, subSampleEst=2
     # Kill workers or they keep being active even if the program is shut down
     get_reusable_executor().shutdown(wait=False, kill_workers=True)
     if clip == "auto":
-        clip = np.sqrt(9+len(dataset)/9)
+        clip = np.sqrt(9+len(dataset)/4)
     dataset.layers["residuals"] = np.clip(np.array(residuals, copy=False).T, -clip, clip)
     if plot:
         # Plot mean/variance relationship and selected probes
@@ -708,7 +682,7 @@ def cluster_rows_leiden(dataset, on="reduced_dims", which="X_pca", feature_mask=
         Metric to use for kNN search, by default "euclidean"
     k : "auto" or int, optional
         Number of nearest neighbors to find, 
-        by default "auto" uses 5*nFeatures^0.2 as a rule of thumb.
+        by default "auto" uses 4*nFeatures^0.2 as a rule of thumb.
     r : float, optional
         Resolution parameter of the graph clustering, by default 1.0
     restarts : int, optional
