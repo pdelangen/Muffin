@@ -819,6 +819,7 @@ def cca(dataset1, dataset2, n_comps=30, layer="residuals"):
     """
     Perform Canonical Correspondance Analysis as in seurat.
     Results will be stored in the .obsm["X_cca"] slot of each dataset.
+    
     Parameters
     ----------
     dataset1 : anndata

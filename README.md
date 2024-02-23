@@ -29,9 +29,7 @@ tar -zxvf muffin_examples_data.tar.gz
 
 Set the path to the data in settings/paths.py (rootFolder variable), and use the
 notebooks located in docs/examples/. Make sure to be in the repository root
-folder when launching notebooks, or use os.chdir() within the notebook. You can
-optionally use the provided apptainer/singularity image instead of a conda
-environment.
+folder when launching notebooks, or use os.chdir() within the notebook. 
 
 If you really wish to reproduce the H3K4Me3 ChIP-seq analysis (WARNING : it will
 download around 100GB of data from ENCODE), you will need to run the the

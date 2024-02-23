@@ -4,6 +4,7 @@ Installation
 Get MUFFIN via conda/mamba (we highly recommend you to start from a fresh environment) :
 
 .. code-block:: bash
+   
    # Change ENV_NAME to the name of your choice, and add OTHER_PACKAGES if needed
    conda install -c conda-forge mamba
    mamba create -n ENV_NAME -c pdelangen13 -c bioconda -c conda-forge muffin OTHER_PACKAGES

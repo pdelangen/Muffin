@@ -8,6 +8,7 @@ gencode = rootFolder + "genome_annot/gencode.v38.annotation.gtf"
 gencodehg19 = rootFolder + "genome_annot/gencode.v45lift37.basic.annotation.gtf"
 # scATAC
 scAtacHD5 = rootFolder + "scATAC/atac_v1_pbmc_10k_filtered_peak_bc_matrix.h5"
+scRNAHD5 = rootFolder + "scATAC/dataset.h5ad"
 scAtacMapqual= rootFolder + "scATAC/atac_v1_pbmc_10k_singlecell.csv"
 # Cancer hallmarks
 atac_cancer_meta = rootFolder + "tcga_atac/sequencing_stats.csv"
