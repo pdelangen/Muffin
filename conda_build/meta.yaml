@@ -1,0 +1,56 @@
+package:
+  name: muffin
+  version: 0.1.1
+
+source:
+  git_url: https://github.com/pdelangen/Muffin.git
+
+build:
+  noarch: python
+  number: 0
+
+requirements:
+  build:
+    - python
+    - pip
+    - setuptools
+  host:
+    - python
+    - pip
+    - setuptools
+  run:
+    - python
+    - pyranges 
+    - numba  
+    - seaborn  
+    - fastcluster  
+    - scikit-learn  
+    - matplotlib  
+    - numpy  
+    - pandas!=2.1.2
+    - joblib  
+    - statsmodels 
+    - umap-learn  
+    - scipy  
+    - kneed  
+    - umap-learn
+    - leidenalg  
+    - igraph  
+    - pybigwig
+    - plotly  
+    - python-kaleido  
+    - scikit-image  
+    - scanpy>=1.9.5
+    - anndata
+
+about:
+  license: GPL
+  license_file: LICENSE
+  summary: A suite of tools for the analysis of sequencing data.
+  description: conda install -c pdelangen13 -c bioconda -c conda-forge muffin
+  dev_url: https://github.com/pdelangen/Muffin
+  doc_url: http://muffin.readthedocs.io/
+
+test:
+  imports:
+    - muffin
