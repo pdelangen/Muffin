@@ -23,7 +23,7 @@ git clone https://github.com/benoitballester/Pol2Atlas.git
 ```
 Download the data from [Zenodo](https://doi.org/10.5281/zenodo.10708208) (~3GB compressed).
 
-And use the notebook located in docs/examples.
+And use the notebooks located in docs/examples.
 
 If you really wish to reproduce the H3K4Me3 ChIP-seq analysis (WARNING : it will
 download around 100GB of data from ENCODE), you will need to run the the
