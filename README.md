@@ -1,9 +1,8 @@
 ![logo](docs/github-header-image1.png)
 ## Installation
 Muffin can be installed through conda. Right now it is only available on a
-private channel and does not work on windows, but it is planned to migrate to
-conda-forge or bioconda. The extra channels are required for dependencies. For
-this reason we highly recommend starting from a fresh environment (and
+private channel, but it is planned to migrate to
+conda-forge or bioconda. We highly recommend starting from a fresh environment (and
 optionally to use mamba instead of conda, which resolves conflicts faster and
 better than conda): 
 ```sh
