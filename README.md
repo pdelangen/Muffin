@@ -21,13 +21,9 @@ Clone the repository :
 ```sh
 git clone https://github.com/benoitballester/Pol2Atlas.git
 ```
-Download the data from [Zenodo](https://doi.org/10.5281/zenodo.10561582) (~5GB uncompressed): 
-```sh
-wget https://zenodo.org/records/10561582/files/muffin_examples_data.tar.gz?download=1
-tar -zxvf muffin_examples_data.tar.gz
-```
+Download the data from [Zenodo](https://doi.org/10.5281/zenodo.10708208) (~3GB compressed).
 
-Set the path to the data in settings/paths.py (rootFolder variable), and use the
+Set the path to the data in settings/paths.py, and use the
 notebooks located in docs/examples/. Make sure to be in the repository root
 folder when launching notebooks, or use os.chdir() within the notebook. 
 

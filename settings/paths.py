@@ -3,6 +3,7 @@ rootFolder = "/shared/projects/pol2_chipseq/data_newPkg/"
 # rootFolder = "/home/delangen/ifbProject/data_newPkg/"
 # genome annotation
 chromsizes = rootFolder + "genome_annot/hg38.chrom.sizes.sorted"
+chromsizes_19 = rootFolder + "genome_annot/hg19.chrom.sizes"
 GOfile = rootFolder + "GO_files/hsapiens.GO:BP.name.gmt"
 gencode = rootFolder + "genome_annot/gencode.v38.annotation.gtf"
 gencodehg19 = rootFolder + "genome_annot/gencode.v45lift37.basic.annotation.gtf"
