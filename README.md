@@ -1,9 +1,8 @@
 ![logo](docs/github-header-image1.png)
 ## Installation
 Muffin can be installed through conda. Right now it is only available on a
-private channel and does not work on windows, but it is planned to migrate to
-conda-forge or bioconda. The extra channels are required for dependencies. For
-this reason we highly recommend starting from a fresh environment (and
+private channel, but it is planned to migrate to
+conda-forge or bioconda. We highly recommend starting from a fresh environment (and
 optionally to use mamba instead of conda, which resolves conflicts faster and
 better than conda): 
 ```sh
@@ -28,7 +27,7 @@ git clone https://github.com/benoitballester/Pol2Atlas.git
 ```
 Download the data from [Zenodo](https://doi.org/10.5281/zenodo.10708208) (~3GB compressed).
 
-And use the notebook located in docs/examples.
+And use the notebooks located in docs/examples.
 
 If you really wish to reproduce the H3K4Me3 ChIP-seq analysis (WARNING : it will
 download around 100GB of data from ENCODE), you will need to run the the
