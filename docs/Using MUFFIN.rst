@@ -11,6 +11,33 @@ Get MUFFIN via conda/mamba (we highly recommend you to start from a fresh enviro
    conda activate ENV_NAME
 
 
+Install optional R dependencies
+----------------------------
+R dependencies of MUFFIN are optional, but are required for read counting (muffin.load.dataset_from_bam), 
+scran normalization and DESeq2 differential expression. To install these on UNIX systems, you can directly use
+conda :
+
+.. code-block:: bash
+   
+   conda install -c conda-forge -c bioconda rpy2 bioconductor-scran bioconductor-deseq2 bioconductor-apeglm bioconductor-rsubread
+
+On windows, you will need to install R and rpy2 via conda, then manually install R dependencies within R (good luck).
+
+.. code-block:: bash
+   
+   conda install -c conda-forge rpy2 r-base
+   R
+
+.. code-block:: R
+   if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+   BiocManager::install("DESeq2")
+   BiocManager::install("apeglm")
+   BiocManager::install("scran")
+   BiocManager::install("Rsubread")
+   
+
 Loading your data
 -----------------
 

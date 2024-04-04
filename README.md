@@ -12,6 +12,11 @@ conda install -c conda-forge mamba
 mamba create -n ENV_NAME -c pdelangen13 -c bioconda -c conda-forge muffin OTHER_PACKAGES
 conda activate ENV_NAME
 ```
+To use the dependencies versions used at build time, you can use the provided yml file : 
+```sh
+conda install -c conda-forge mamba
+mamba env create -f environment_muffin.yml
+```
 ## Documentation
 Guidelines, examples and API reference are available on
 [ReadTheDocs](http://muffin.readthedocs.io/).

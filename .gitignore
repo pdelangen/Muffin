@@ -23,3 +23,4 @@ benchmarks/benchmark_results
 benchmarks/peakmerge/benchmark_results
 all_peaks_ctcf_subset.bed
 .bckupgit
+10k_pbmc_gene
