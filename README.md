@@ -23,7 +23,7 @@ Guidelines, examples and API reference are available on
 ## Reproduce the examples from the paper
 Clone the repository : 
 ```sh
-git clone https://github.com/benoitballester/Pol2Atlas.git
+git clone https://github.com/pdelangen/Muffin
 ```
 Download the data from [Zenodo](https://doi.org/10.5281/zenodo.10708208) (~3GB compressed).
 
