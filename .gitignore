@@ -19,8 +19,15 @@ docs/examples/10k_pbmc_clustering-copy.ipynb
 data
 3k_pbmc
 scATAC_pbmc
+scATAC
 benchmarks/benchmark_results
 benchmarks/peakmerge/benchmark_results
 all_peaks_ctcf_subset.bed
 .bckupgit
 10k_pbmc_gene
+genome_annot
+immune_chip
+GO_files
+tcga_atac
+scATAC_pbmc_bcells_cluster_treemap.pdf
+scATAC_pbmc_bcells_cluster_treemap.pdf.html

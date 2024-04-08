@@ -6,8 +6,9 @@ import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
 from joblib.externals.loky import get_reusable_executor
-from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import LabelEncoder
+from sklearn.neighbors import LocalOutlierFactor
 from statsmodels.nonparametric.smoothers_lowess import lowess
 import umap
 from statsmodels.stats.multitest import fdrcorrection
@@ -493,10 +494,10 @@ def compute_residuals(dataset, residuals="quantile", clip=np.inf, subSampleEst=2
     # Kill workers or they keep being active even if the program is shut down
     get_reusable_executor().shutdown(wait=False, kill_workers=True)
     alphas = np.array(alphas)
-    validAlphas = (alphas > 1e-3) & (alphas < 1e5)
-    # Take rolling median to avoid lowess to go all over the place
-    regAlpha = np.array(pd.Series(alphas[validAlphas]).rolling(5, center=True, min_periods=1).median())
-    # Interpolate between values
+    validAlphas = (alphas > 1e-3) & (alphas < 1e3)
+    # Take rolling median
+    regAlpha = np.array(pd.Series(alphas[validAlphas]).rolling(200, center=True, min_periods=1).median())
+    # Interpolate between values with lowess
     dataset.var["reg_alpha"] = np.exp(lowess(np.log(regAlpha), indices[validAlphas], frac=0.05, xvals=np.argsort(meanOrder)))
     # Dispatch accross multiple processes
     sf = dataset.obs["size_factors"].values
@@ -627,7 +628,7 @@ def compute_umap(dataset, on="reduced_dims", which="X_pca", feature_mask=None, u
     Parameters
     ----------
     on : str, optional
-        On which data representation to perform clustering. Use "reduced_dims"
+        On which data representation to perform umap. Use "reduced_dims"
         or "features", by default "reduced_dims".
     which : str, optional
         Which reduced_dims or feature to use. I.e. "PCA" or "residuals", by
@@ -663,13 +664,16 @@ def compute_umap(dataset, on="reduced_dims", which="X_pca", feature_mask=None, u
     else:
         raise ValueError("Invalid 'on' parameter, use either 'reduced_dims' or 'features'")
     if not "metric" in umap_params.keys():
-        umap_params["metric"] = "euclidean"
+        if data.shape[1] > 10:
+            umap_params["metric"] = "correlation"
+        else:
+            umap_params["metric"] = "euclidean"
     umap_params["random_state"] = 42
     dataset.obsm["X_umap"] = umap.UMAP(**umap_params).fit_transform(data)
     return dataset
 
 def cluster_rows_leiden(dataset, on="reduced_dims", which="X_pca", feature_mask=None,
-                    metric="euclidean", k="auto", r=1.0, restarts=10):  
+                    metric="auto", k="auto", r=1.0, restarts=10):  
     """
     Computes Shared Nearest Neighbor graph clustering.
 
@@ -685,7 +689,9 @@ def cluster_rows_leiden(dataset, on="reduced_dims", which="X_pca", feature_mask=
         Subset of features to use for Umap (works with PCA as well), 
         by default None
     metric : str, optional
-        Metric to use for kNN search, by default "euclidean"
+        Metric to use for kNN search, by default "auto". If set to auto
+        Pearson correlation is used as the metric when there are more than 
+        10 input dimensions; otherwise, the Euclidean distance is used.
     k : "auto" or int, optional
         Number of nearest neighbors to find, 
         by default "auto" uses 4*nFeatures^0.2 as a rule of thumb.
@@ -717,6 +723,11 @@ def cluster_rows_leiden(dataset, on="reduced_dims", which="X_pca", feature_mask=
             raise KeyError(f"Invalid 'which' parameter : {which}, make sure you have initialized the key or computed residuals beforehand.")
     else:
         raise ValueError("Invalid 'on' parameter, use either 'reduced_dims' or 'features'")
+    if metric == "auto":
+        if data.shape[1] > 10:
+            metric = "correlation"
+        else:
+            metric = "euclidean"
     dataset.obs["leiden"] = cluster.graphClustering(data, metric=metric, 
                                                          k=k, r=r, restarts=restarts).astype(str)
     return dataset
@@ -844,10 +855,13 @@ def cca(dataset1, dataset2, n_comps=30, layer="residuals"):
 
 def transfer_categorical_labels(dataset_ref, dataset_target, label, 
                                 representation_common, representation_target="X_pca",
-                                k_smoothing="auto"):
+                                k_smoothing="auto", metric="auto"):
     """
     Transfer a categorical label from observations of dataset_ref to
-    dataset_target. e.g clustering info from scRNA-seq to scATAC.
+    dataset_target. e.g clustering info from scRNA-seq to scATAC. 
+    Uses a RF classifier fitted on reference dataset to predict labels on
+    the target dataset. Predictions are then smoothed using kNN, and 
+    untransferrable points are detected using Local Outlier Factor.
 
     Parameters
     ----------
@@ -866,14 +880,27 @@ def transfer_categorical_labels(dataset_ref, dataset_target, label,
     k_smoothing : "auto" or int
         Number of nearest neighbors used for label smoothing.
     """
-    predictor_1 = RandomForestClassifier(criterion="log_loss", 
-                                         class_weight="balanced_subsample")
+    predictor_1 = RandomForestClassifier(criterion="log_loss", random_state=42)
     labelencoder = LabelEncoder()
     int_cat = labelencoder.fit_transform(dataset_ref.obs[label])
     predictor_1.fit(dataset_ref.obsm[representation_common], int_cat)
     predicted = predictor_1.predict(dataset_target.obsm[representation_common])
+
+    if metric == "auto":
+        if dataset_ref.obsm[representation_common].shape[1] > 10:
+            metric = "correlation"
+        else:
+            metric = "euclidean"
+
     if k_smoothing == "auto":
         k_smoothing = int(np.power(dataset_target.shape[0], 0.2)*4)
-    predicted = cluster.approx_knn_predictor(dataset_target.obsm[representation_target], predicted, "euclidean", 
+    predicted = cluster.approx_knn_predictor(dataset_target.obsm[representation_target], predicted, metric, 
                                              k_smoothing)
+    
     dataset_target.obs[label + "_transferred"] = labelencoder.inverse_transform(predicted)
+    
+    outlierdetector = LocalOutlierFactor(n_neighbors=50, metric=metric, novelty=True)
+    outlierdetector.fit(dataset_ref.obsm[representation_common])
+    outliers = outlierdetector.predict(dataset_target.obsm[representation_common]) < 0.0
+    dataset_target.obs.loc[outliers,label + "_transferred"] = "Untransferrable"
+    

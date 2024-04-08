@@ -29,9 +29,9 @@ On windows, you will need to install R and rpy2 via conda, then manually install
    R
 
 .. code-block:: R
-   if (!require("BiocManager", quietly = TRUE))
-    install.packages("BiocManager")
 
+   if (!require("BiocManager", quietly = TRUE))
+      install.packages("BiocManager")
    BiocManager::install("DESeq2")
    BiocManager::install("apeglm")
    BiocManager::install("scran")
