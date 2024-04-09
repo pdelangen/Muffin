@@ -549,7 +549,7 @@ def compute_residuals(dataset, residuals="quantile", clip=np.inf, subSampleEst=2
     return dataset
     
 def compute_pa_pca(dataset, layer="residuals", feature_mask=None, perm=3, alpha=0.01, 
-                    solver="randomized", whiten=False,
+                    solver="arpack", whiten=False,
                     max_rank=None, mincomp=2, plot=False):
     """
     Permutation Parallel Analysis to find the optimal number of PCA components.
@@ -573,7 +573,8 @@ def compute_pa_pca(dataset, layer="residuals", feature_mask=None, perm=3, alpha=
         Permutation p-value threshold.
     
     solver: "arpack" or "randomized"
-        Chooses the SVD solver. Randomized is much faster but very slightly less accurate.
+        Chooses the SVD solver. Randomized is much faster but less accurate and yields
+        different results machine-to-machine.
     
     whiten: bool (default True)
         If set to true, each component is transformed to have unit variance.

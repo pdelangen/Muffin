@@ -1,13 +1,13 @@
 package:
   name: muffin
-  version: 0.1.1
+  version: 0.1.2
 
 source:
   git_url: https://github.com/pdelangen/Muffin.git
 
 build:
   noarch: python
-  number: 1
+  number: 0
 
 requirements:
   build:

@@ -50,7 +50,7 @@ def permutationPA_PCA(X, perm=3, alpha=0.01, solver="randomized", whiten=False,
     """
     # Compute eigenvalues of observed data
     ref = PCA(max_rank, whiten=whiten, svd_solver=solver, random_state=42)
-    decompRef = ref.fit_transform(X)
+    decompRef = ref.fit_transform(X.astype("float64"))
     dstat_obs = ref.explained_variance_
     # Compute permutation eigenvalues
     dstat_null = np.zeros((perm, len(dstat_obs)))
@@ -93,8 +93,8 @@ def seurat_cca(x, y, comps=None):
         Reduced dimensionnality representation respectively for x and y
     """    
     XYT = np.dot(x, y.T)
-    model = TruncatedSVD(comps)
-    U = model.fit_transform(XYT)
+    model = TruncatedSVD(comps, algorithm="arpack")
+    U = model.fit_transform(XYT.astype("float64"))
     # Rescale to unit norm to have comparable latent spaces
     Zx = U / np.linalg.norm(U, axis=0)
     Zy = model.components_[:U.shape[1]].T

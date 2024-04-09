@@ -125,7 +125,7 @@ def nb_rqr(x, m, alpha):
 def nb_mqr(x, m, alpha):
     # Middle point Quantile residuals
     n = 1/alpha
-    p = m / (m + alpha * (m**2))
+    p = (m / (m + alpha * (m**2)))
     q = nbinom(n,p).sf(x-1) - 0.5 * nbinom(n,p).pmf(x)
     # Clip for numerical stability
     q = np.clip(q, 1e-323, 1-6e-17)
